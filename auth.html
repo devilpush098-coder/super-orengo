@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Access - Bitcoin Mining</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #121214;
+            color: #ffffff;
+            padding: 16px;
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-card {
+            background-color: #1a1a1e;
+            border: 1px solid #27272a;
+            border-radius: 20px;
+            padding: 24px 20px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .app-icon {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #f97316, #a855f7);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px auto;
+            font-weight: bold; font-size: 22px;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+            animation: pulseGlow 2.5s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.3); }
+            100% { box-shadow: 0 0 22px rgba(168, 85, 247, 0.7); }
+        }
+
+        .label-sm { color: #a1a1aa; font-size: 12px; display: block; margin-bottom: 4px; }
+
+        .input-field {
+            width: 100%;
+            background-color: #25252b;
+            border: 1px solid #3f3f46;
+            color: #ffffff;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 6px 0 12px 0;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .input-field:focus { border-color: #6366f1; }
+
+        .terms-box {
+            background-color: #25252b;
+            border: 1px solid #3f3f46;
+            border-radius: 10px;
+            height: 100px;
+            overflow-y: scroll;
+            padding: 10px;
+            font-size: 11px;
+            color: #a1a1aa;
+            line-height: 1.4;
+            margin: 6px 0 8px 0;
+        }
+
+        .terms-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            color: #d4d4d8;
+        }
+
+        .terms-container input {
+            accent-color: #6366f1;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .terms-container input:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .forgot-link {
+            display: block;
+            text-align: right;
+            font-size: 11px;
+            color: #6366f1;
+            cursor: pointer;
+            margin-top: -6px;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background-color: #6366f1;
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+        .switch-text {
+            text-align: center;
+            font-size: 12px;
+            color: #a1a1aa;
+            margin-top: 16px;
+            cursor: pointer;
+        }
+
+        .switch-text span { color: #6366f1; font-weight: 600; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: none; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-card {
+            background-color: #1a1a1e; border: 1px solid #3f3f46;
+            border-radius: 20px; padding: 20px; width: 100%; max-width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <header>
+            <div class="app-icon">₿</div>
+            <h2 id="auth-title" style="font-size: 20px;">Welcome Back</h2>
+            <span class="label-sm" style="margin-top: 4px;">Sign in to start mining</span>
+        </header>
+
+        <div id="register-fields" style="display: none;">
+            <label class="label-sm">Username</label>
+            <input type="text" id="reg-user" class="input-field" placeholder="Satoshi">
+
+            <label class="label-sm">Referral Code (Optional)</label>
+            <input type="text" id="reg-ref" class="input-field" placeholder="e.g. ABC123XYZ">
+        </div>
+
+        <label class="label-sm">Email Address</label>
+        <input type="email" id="auth-email" class="input-field" placeholder="user@example.com">
+
+        <label class="label-sm">Password</label>
+        <input type="password" id="auth-password" class="input-field" placeholder="••••••••">
+
+        <!-- TERMS & CONDITIONS (NOW PLACED AFTER PASSWORD IN REGISTRATION) -->
+        <div id="terms-section" style="display: none;">
+            <label class="label-sm">Terms & Conditions (Scroll to bottom to unlock)</label>
+            <div id="terms-scroll-box" class="terms-box" onscroll="checkScrollPosition()">
+                <strong>1. Simulation Disclaimer:</strong> This application is a simulated cloud mining dashboard built for entertainment and educational purposes. All Bitcoin and USD balances are virtual representations.<br><br>
+                <strong>2. Account Security:</strong> You are responsible for keeping your account credentials secure. Local storage data is tied directly to your device browser cache.<br><br>
+                <strong>3. Payouts & Upgrades:</strong> Payout thresholds ($10.00 min) and premium purchases (+100 Gh/s) operate under simulated transactional logic within the app ecosystem.<br><br>
+                <strong>4. Policy Acceptance:</strong> By checking the box below, you agree to abide by community guidelines and platform rules.
+            </div>
+
+            <div class="terms-container">
+                <input type="checkbox" id="terms-checkbox" disabled>
+                <label id="terms-label" for="terms-checkbox" style="color: #71717a;">Please scroll down to accept terms</label>
+            </div>
+        </div>
+
+        <span id="forgot-password-link" class="forgot-link" onclick="openForgotModal()">Forgot Password?</span>
+
+        <button id="auth-btn" class="btn-primary" onclick="handleAuthSubmit()">Sign In</button>
+
+        <p id="auth-switch-text" class="switch-text" onclick="toggleAuthMode()">
+            Don't have an account? <span>Register</span>
+        </p>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgot-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">Reset Password</h3>
+            <span style="font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 12px;">Enter your registered Email and Username to reset.</span>
+
+            <label class="label-sm">Email Address</label>
+            <input type="email" id="reset-email" class="input-field" placeholder="user@example.com">
+
+            <label class="label-sm">Registered Username</label>
+            <input type="text" id="reset-user" class="input-field" placeholder="Satoshi">
+
+            <label class="label-sm">New Password</label>
+            <input type="password" id="reset-new-pass" class="input-field" placeholder="••••••••">
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="btn-primary" style="background-color: #27272a;" onclick="closeForgotModal()">Cancel</button>
+                <button class="btn-primary" onclick="processPasswordReset()">Save New Password</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRegisterMode = false;
+
+        if (localStorage.getItem('currentUserEmail')) {
+            window.location.href = 'index.html';
+        }
+
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('register-fields').style.display = isRegisterMode ? 'block' : 'none';
+            document.getElementById('terms-section').style.display = isRegisterMode ? 'block' : 'none';
+            document.getElementById('auth-title').innerText = isRegisterMode ? 'Create Account' : 'Welcome Back';
+            document.getElementById('auth-btn').innerText = isRegisterMode ? 'Register' : 'Sign In';
+            document.getElementById('forgot-password-link').style.display = isRegisterMode ? 'none' : 'block';
+            document.getElementById('auth-switch-text').innerHTML = isRegisterMode ? 
+                'Already have an account? <span>Sign In</span>' : 
+                "Don't have an account? <span>Register</span>";
+        }
+
+        function checkScrollPosition() {
+            const box = document.getElementById('terms-scroll-box');
+            const checkbox = document.getElementById('terms-checkbox');
+            const label = document.getElementById('terms-label');
+
+            if (box.scrollHeight - box.scrollTop <= box.clientHeight + 5) {
+                checkbox.disabled = false;
+                label.style.color = "#d4d4d8";
+                label.innerText = "I accept the Terms & Conditions";
+            }
+        }
+
+        function openForgotModal() {
+            document.getElementById('forgot-modal').classList.add('open');
+        }
+
+        function closeForgotModal() {
+            document.getElementById('forgot-modal').classList.remove('open');
+        }
+
+        function processPasswordReset() {
+            const email = document.getElementById('reset-email').value.trim();
+            const username = document.getElementById('reset-user').value.trim();
+            const newPassword = document.getElementById('reset-new-pass').value.trim();
+
+            if (!email || !username || !newPassword) {
+                alert("Please complete all verification fields.");
+                return;
+            }
+
+            const storedData = localStorage.getItem(`user_${email}`);
+            if (!storedData) {
+                alert("Account with this email does not exist.");
+                return;
+            }
+
+            const userObj = JSON.parse(storedData);
+            if (userObj.username.toLowerCase() !== username.toLowerCase()) {
+                alert("Username does not match our records for this email.");
+                return;
+            }
+
+            userObj.password = newPassword;
+            localStorage.setItem(`user_${email}`, JSON.stringify(userObj));
+
+            alert("Password updated successfully! You can now log in with your new password.");
+            closeForgotModal();
+        }
+
+        function handleAuthSubmit() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+
+            if (!email || !password) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+
+            if (isRegisterMode) {
+                const username = document.getElementById('reg-user').value.trim();
+                const referralCode = document.getElementById('reg-ref').value.trim();
+                const termsAccepted = document.getElementById('terms-checkbox').checked;
+
+                if (!username) {
+                    alert("Please enter a username.");
+                    return;
+                }
+
+                if (!termsAccepted) {
+                    alert("You must scroll through and accept the Terms & Conditions.");
+                    return;
+                }
+
+                const userData = { 
+                    password, 
+                    username, 
+                    referralCode,
+                    initialBonus: referralCode ? 0.50 : 0.00 
+                };
+
+                localStorage.setItem(`user_${email}`, JSON.stringify(userData));
+                
+                if (referralCode) {
+                    localStorage.setItem(`pendingRef_${email}`, referralCode);
+                }
+
+                alert("Registration successful! Switching to sign in...");
+                toggleAuthMode();
+            } else {
+                const storedData = localStorage.getItem(`user_${email}`);
+                if (!storedData) {
+                    alert("Account not found. Please register first.");
+                    return;
+                }
+                const userObj = JSON.parse(storedData);
+                if (userObj.password !== password) {
+                    alert("Incorrect password.");
+                    return;
+                }
+
+                localStorage.setItem('currentUserEmail', email);
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

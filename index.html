@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Cloud Mining Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #121214;
+            color: #ffffff;
+            padding: 16px;
+            padding-bottom: 80px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* Full Screen Notes Layout */
+        #screen-notes.active {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            bottom: 76px;
+            z-index: 50;
+            max-width: 448px;
+            margin: 0 auto;
+        }
+
+        #screen-notes .card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+            background-color: #1a1a1e;
+            overflow: hidden;
+        }
+
+        #user-notes-input {
+            flex: 1;
+            height: auto !important;
+            min-height: 150px;
+        }
+
+        header { text-align: center; padding: 12px 0 20px 0; }
+        
+        .app-icon {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #f97316, #a855f7);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px auto;
+            font-weight: bold; font-size: 22px;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+            animation: pulseGlow 2.5s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.3); }
+            100% { box-shadow: 0 0 22px rgba(168, 85, 247, 0.7); }
+        }
+
+        .label-sm { color: #a1a1aa; font-size: 12px; display: block; margin-bottom: 4px; }
+        .total-btc { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+        .usd-text { font-size: 12px; color: #34d399; margin-top: 2px; }
+
+        .card {
+            background-color: #1a1a1e;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .balance-box { display: flex; align-items: center; gap: 8px; margin: 10px 0 2px 0; }
+        .btc-symbol { color: #f97316; font-weight: bold; font-size: 18px; }
+        .balance-amount { font-family: monospace; font-size: 18px; font-weight: bold; }
+
+        .stats-box {
+            background-color: #25252b;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+        }
+
+        .miners-text { color: #34d399; font-size: 12px; margin-top: 2px; }
+        .notice-text { color: #a1a1aa; font-size: 11px; text-align: center; line-height: 1.4; margin-bottom: 14px; }
+
+        .btn-primary {
+            width: 100%;
+            background-color: #6366f1;
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+        .input-field, select.input-field, textarea.input-field {
+            width: 100%; background-color: #25252b; border: 1px solid #3f3f46;
+            color: #ffffff; padding: 10px 12px; border-radius: 10px;
+            margin: 8px 0 14px 0; font-size: 13px; outline: none;
+            resize: vertical;
+        }
+
+        .referral-box {
+            display: flex; align-items: center;
+            background-color: #25252b; border: 1px solid #3f3f46;
+            border-radius: 10px; padding: 6px 10px; margin: 10px 0;
+        }
+
+        .referral-input {
+            background: transparent; border: none; color: #a1a1aa;
+            font-size: 11px; width: 100%; outline: none;
+        }
+
+        .btn-copy {
+            background-color: #6366f1; color: white; border: none;
+            padding: 6px 12px; border-radius: 6px; font-size: 11px;
+            font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
+
+        .rewards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+        .reward-card {
+            background-color: #1a1a1e; border: 1px solid #27272a;
+            border-radius: 16px; padding: 12px;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .reward-amount { color: #fb923c; font-size: 13px; font-weight: bold; margin-top: 4px; }
+        .btn-reward {
+            width: 100%; background-color: #6366f1; color: white;
+            border: none; padding: 8px; border-radius: 8px;
+            font-size: 12px; font-weight: 600; margin-top: 10px; cursor: pointer;
+        }
+
+        .btn-reward.disabled { background-color: #27272a; color: #71717a; cursor: not-allowed; }
+
+        .faq-item { padding: 12px 0; border-bottom: 1px solid #27272a; cursor: pointer; }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .faq-answer { display: none; font-size: 12px; color: #a1a1aa; margin-top: 8px; line-height: 1.4; }
+        .faq-item.open .faq-answer { display: block; }
+        .faq-item.open .faq-header span:last-child { transform: rotate(180deg); }
+
+        .navbar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background-color: #1a1a1e; border-top: 1px solid #27272a;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            max-width: 480px; margin: 0 auto; z-index: 100;
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            text-decoration: none; color: #71717a; font-size: 10px; gap: 3px;
+            background: none; border: none; cursor: pointer;
+        }
+
+        .nav-item.active { color: #6366f1; }
+        .nav-icon { font-size: 18px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: none; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            background-color: #1a1a1e; border: 1px solid #3f3f46;
+            border-radius: 20px; padding: 20px; width: 100%; max-width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        /* SPIN WHEEL ANIMATION STYLES */
+        .wheel-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 16px auto;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 20px solid #ef4444;
+            z-index: 10;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid #3f3f46;
+            background: conic-gradient(
+                #6366f1 0deg 60deg,
+                #10b981 60deg 120deg,
+                #f97316 120deg 180deg,
+                #a855f7 180deg 240deg,
+                #ef4444 240deg 300deg,
+                #eab308 300deg 360deg
+            );
+            transition: transform 3s cubic-bezier(0.15, 0.85, 0.35, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background-color: #10b981; color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 12px; font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.3s ease;
+            z-index: 300;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast">Notification</div>
+
+    <!-- Header -->
+    <header>
+        <div class="app-icon">₿</div>
+        <span class="label-sm">Total BTC</span>
+        <div id="header-total-btc" class="total-btc">0.0000026050400</div>
+        <div id="header-total-usd" class="usd-text">≈ $0.00 USD</div>
+    </header>
+
+    <!-- TAB 1: HOME -->
+    <main id="screen-home" class="screen active">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; font-weight: 600;">Mining Panel</span>
+                <span style="color: #a1a1aa; font-size: 14px; cursor: pointer; padding: 4px;" onclick="openInfoModal()">ⓘ</span>
+            </div>
+
+            <div class="balance-box">
+                <span class="btc-symbol">₿</span>
+                <span id="mining-balance" class="balance-amount">0.00000262978</span>
+                <span style="font-size: 10px; color: #71717a;">BTC</span>
+            </div>
+            <div id="mining-usd" class="usd-text" style="margin-bottom: 12px;">≈ $0.00 USD</div>
+
+            <div class="stats-box">
+                <div style="font-size: 24px;">📟</div>
+                <div>
+                    <div id="hash-rate-display" style="font-weight: 600; font-size: 14px;">26.50 Gh/s</div>
+                    <div class="miners-text">● 38,776 Active Miners</div>
+                </div>
+            </div>
+
+            <p class="notice-text">
+                Mining will stop when the timer stops. You need to restart it manually to continue mining.
+            </p>
+
+            <button class="btn-primary" id="timer-btn" onclick="toggleMiningState()">
+                27:39
+            </button>
+        </div>
+
+        <!-- DAILY $0.01 CASH BOX -->
+        <div class="card" style="border: 1px solid #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; font-weight: bold; color: #34d399;">💵 Daily Cash Bonus</span>
+                <span style="font-size: 11px; background: #25252b; padding: 2px 8px; border-radius: 10px; color: #fb923c;">+$0.01 USD Daily</span>
+            </div>
+            <p style="font-size: 11px; color: #a1a1aa; margin-top: 6px; line-height: 1.4;">
+                Tap the mystery box once every 24 hours to add <strong>$0.01 USD</strong> directly to your balance!
+            </p>
+            <button id="daily-cash-btn" class="btn-primary" style="background-color: #10b981; margin-top: 10px;" onclick="claimDailyCash()">
+                🎁 Open Box (Claim $0.01)
+            </button>
+        </div>
+
+        <!-- DAILY LUCKY SPIN WHEEL CARD -->
+        <div class="card" style="border: 1px solid #a855f7;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; font-weight: bold; color: #a855f7;">🎡 Daily Lucky Spin</span>
+                <span style="font-size: 11px; background: #25252b; padding: 2px 8px; border-radius: 10px; color: #34d399;">Win up to $0.005</span>
+            </div>
+            <p style="font-size: 11px; color: #a1a1aa; margin-top: 6px; line-height: 1.4;">
+                Spin once per day! Win up to <strong>$0.005 USD</strong> or try again next time.
+            </p>
+            <button id="spin-btn" class="btn-primary" style="background-color: #a855f7; margin-top: 10px;" onclick="openSpinModal()">
+                🎯 Open Lucky Wheel
+            </button>
+        </div>
+
+        <!-- REFER & EARN CARD -->
+        <div class="card" style="border: 1px solid #6366f1;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; font-weight: bold; color: #a855f7;">👥 Refer & Earn Together</span>
+                <span id="referral-count" style="font-size: 11px; background: #25252b; padding: 2px 8px; border-radius: 10px; color: #34d399;">0 Invites</span>
+            </div>
+            <p style="font-size: 11px; color: #a1a1aa; margin-top: 6px; line-height: 1.4;">
+                Invite friends to join! Earn <strong style="color: #fb923c;">+5.0 Gh/s</strong> boost & <strong style="color: #34d399;">+$0.50 USD</strong> for every friend who signs up.
+            </p>
+            
+            <div class="referral-box">
+                <input type="text" id="ref-link-input" class="referral-input" value="https://btccloud.app/ref?id=user" readonly>
+                <button class="btn-copy" onclick="copyReferralLink()">Copy Link</button>
+            </div>
+        </div>
+
+        <div class="rewards-grid">
+            <div class="reward-card">
+                <div>
+                    <span class="label-sm">Daily Reward</span>
+                    <div class="reward-amount">🎁 10.6 Gh/s</div>
+                </div>
+                <button id="reward1-btn" class="btn-reward" onclick="claimReward('reward1', 10.6)">Claim 10.6 Gh/s</button>
+            </div>
+            <div class="reward-card">
+                <div>
+                    <span class="label-sm">Daily Reward</span>
+                    <div class="reward-amount">🎁 20.2 Gh/s</div>
+                </div>
+                <button id="reward2-btn" class="btn-reward" onclick="claimReward('reward2', 20.2)">Claim 20.2 Gh/s</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <span style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 8px;">FAQs</span>
+            
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>What is Bitcoin Cloud Mining?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Cloud mining allows users to mine Bitcoin remotely using shared processing power from data centers without managing physical hardware.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>How is computing power connected to Bitcoin?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Computing power (hash rate) solves cryptographic hashes to secure the blockchain network and validate blocks, earning rewards.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>Can I mine Bitcoin remotely?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Yes, remote cloud mining lets you leverage cloud infrastructure to participate in mining operations directly from your mobile device.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>What is a Hashrate?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Hashrate is the measure of your mining equipment's processing power, determining how many calculations it can perform per second.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>Can You Earn Profit from Bitcoin Cloud Mining?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Earnings depend on your active hash rate allocation, daily bonus claims, referral growth, and simulated market rates.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>Is It Possible to Increase Remote Bitcoin Mining Speed?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Yes, you can increase your speed by inviting friends through the referral program, claiming daily rewards, or upgrading your plan.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFAQ(this)">
+                <div class="faq-header">
+                    <span>Is Bitcoin Mining Legal?</span>
+                    <span>∨</span>
+                </div>
+                <div class="faq-answer">
+                    Bitcoin mining legality varies by jurisdiction. This application is a simulated dashboard built for educational and entertainment purposes.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- TAB 2: WALLET -->
+    <main id="screen-wallet" class="screen">
+        <div class="card">
+            <span style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 12px;">Wallet Balance</span>
+            <div class="balance-box">
+                <span class="btc-symbol">₿</span>
+                <span id="wallet-balance" class="balance-amount">0.00000262978</span>
+            </div>
+            <div id="wallet-usd" class="usd-text" style="margin-bottom: 14px;">≈ $0.00 USD</div>
+
+            <div style="background-color: #25252b; border: 1px solid #3f3f46; border-radius: 10px; padding: 10px; margin-bottom: 14px;">
+                <span style="font-size: 11px; color: #fb923c; font-weight: 600;">Minimum Withdrawal: $10.00 USD</span>
+                <span style="display: block; font-size: 10px; color: #a1a1aa; margin-top: 2px;">Payouts supported via Bitcoin Wallet or PayPal ($10 min).</span>
+            </div>
+
+            <button class="btn-primary" style="margin-top: 4px;" onclick="openWithdrawModal()">Withdraw Funds</button>
+        </div>
+    </main>
+
+    <!-- TAB 3: PREMIUM -->
+    <main id="screen-premium" class="screen">
+        <div class="card" style="text-align: center; padding: 24px 16px;">
+            <div style="font-size: 32px; margin-bottom: 8px;">⚡</div>
+            <h2 style="font-size: 18px; margin-bottom: 6px;">Boost Hash Rate</h2>
+            <p class="notice-text">Upgrade your hardware allocation to double mining speed. Requires a minimum payment of <strong>$3.00 USD</strong>.</p>
+            <div style="font-size: 22px; font-weight: bold; color: #fb923c; margin: 16px 0;">+100.00 Gh/s</div>
+            <button class="btn-primary" onclick="openUpgradeModal()">Upgrade Plan ($3.00)</button>
+        </div>
+    </main>
+
+    <!-- TAB 4: NOTES (FULL SCREEN SYSTEM ANALYSIS & DESIGN STUDY GUIDE) -->
+    <main id="screen-notes" class="screen">
+        <div class="card">
+            <span style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 8px;">📚 System Analysis & Design Notes (CDACC/TVET Guide)</span>
+            <textarea id="user-notes-input" class="input-field" placeholder="Write your notes here...">========================================
+TOPIC 1: INTRODUCTION TO SYSTEM ANALYSIS
+- System: Related components working together[span_0](start_span)[span_0](end_span).
+- System analysis: Studying an existing/proposed system to find problems & requirements[span_1](start_span)[span_1](end_span).
+- System design: Planning structure, components & operations[span_2](start_span)[span_2](end_span).
+
+TOPIC 2: TYPES OF INFORMATION SYSTEMS
+- TPS: Routine daily transactions[span_3](start_span)[span_3](end_span).
+- MIS: Regular summaries for middle management[span_4](start_span)[span_4](end_span).
+- DSS: Semi-structured decisions using models[span_5](start_span)[span_5](end_span).
+- ESS: Strategic information for senior executives[span_6](start_span)[span_6](end_span).
+- Expert System: Specialist knowledge-base advisory[span_7](start_span)[span_7](end_span).
+
+TOPIC 3: SDLC PHASES
+- Planning: Problem definition, scope, schedule[span_8](start_span)[span_8](end_span).
+- Feasibility: Practicality & viability check[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span).
+- Analysis: Requirements gathering[span_11](start_span)[span_11](end_span).
+- Design: Architecture & DB schema specification[span_12](start_span)[span_12](end_span).
+- Development: Coding & component building[span_13](start_span)[span_13](end_span).
+- Testing & Implementation: Defect correction & rollout[span_14](start_span)[span_14](end_span).
+- Maintenance: Post-installation adjustments[span_15](start_span)[span_15](end_span).
+
+TOPIC 4: FEASIBILITY TYPES
+- Technical, Economic, Operational, Legal, Schedule[span_16](start_span)[span_16](end_span).
+
+TOPIC 5: FACT-FINDING TECHNIQUES
+- Interviews, Questionnaires, Observation, Document review, Research[span_17](start_span)[span_17](end_span).
+
+TOPIC 6: REQUIREMENTS
+- Functional: What the system does[span_18](start_span)[span_18](end_span).
+- Non-functional: Performance constraints & security[span_19](start_span)[span_19](end_span).
+
+TOPIC 7: ANALYSIS TOOLS
+- DFDs (External entity, process, data flow, data store)[span_20](start_span)[span_20](end_span).
+- Flowcharts & ERDs (Entity Relationship Diagrams)[span_21](start_span)[span_21](end_span).
+
+TOPIC 8 & 9: DESIGN & CHANGEOVER
+- Input, Output, Database, UI, Security design[span_22](start_span)[span_22](end_span).
+- Changeover types: Direct, Parallel, Pilot, Phased[span_23](start_span)[span_23](end_span)[span_24](start_span)[span_24](end_span).
+
+TOPIC 10 - 14: TESTING, MAINTENANCE & SECURITY
+- Unit, Integration, System, Acceptance testing[span_25](start_span)[span_25](end_span).
+- Corrective, Adaptive, Perfective, Preventive maintenance[span_26](start_span)[span_26](end_span).
+- Authentication, Authorization, Encryption, Backups[span_27](start_span)[span_27](end_span).
+========================================</textarea>
+            <button class="btn-primary" onclick="saveUserNotes()">Save Notes</button>
+        </div>
+    </main>
+
+    <!-- TAB 5: SETTINGS -->
+    <main id="screen-settings" class="screen">
+        <div class="card">
+            <span style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 12px;">Account Preferences</span>
+            <div style="font-size: 12px; color: #a1a1aa; margin-bottom: 12px;">
+                Logged in as: <span id="current-user-email" style="color: #ffffff; font-weight: 600;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px; border-bottom: 1px solid #27272a;">
+                <span>Sign Out</span>
+                <button onclick="logoutUser()" style="background: #6366f1; border: none; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">Logout</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px;">
+                <span>Reset Local Data</span>
+                <button onclick="resetData()" style="background: #ef4444; border: none; color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; cursor: pointer;">Reset</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <button class="nav-item active" onclick="switchTab('home', this)">
+            <span class="nav-icon">⌂</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('wallet', this)">
+            <span class="nav-icon">👛</span>
+            <span>Wallet</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('premium', this)">
+            <span class="nav-icon">★</span>
+            <span>Premium</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('notes', this)">
+            <span class="nav-icon">📋</span>
+            <span>Notes</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('settings', this)">
+            <span class="nav-icon">⚙</span>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <!-- SPIN WHEEL MODAL -->
+    <div id="spin-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 style="font-size: 16px; color: #a855f7;">Daily Lucky Wheel</h3>
+                <span style="cursor: pointer; font-size: 18px; color: #a1a1aa;" onclick="closeSpinModal()">✕</span>
+            </div>
+            <p style="font-size: 11px; color: #a1a1aa;">Spin to test your luck once today!</p>
+            
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div id="wheel-disc" class="wheel">🎰</div>
+            </div>
+
+            <button id="modal-spin-action-btn" class="btn-primary" style="background-color: #a855f7;" onclick="executeSpin()">
+                SPIN WHEEL NOW
+            </button>
+        </div>
+    </div>
+
+    <!-- INFO EXPLANATION MODAL -->
+    <div id="info-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 16px; color: #fb923c;">Mining Panel Guide</h3>
+                <span style="cursor: pointer; font-size: 18px; color: #a1a1aa;" onclick="closeInfoModal()">✕</span>
+            </div>
+            <p style="font-size: 13px; color: #d4d4d8; line-height: 1.5; margin-bottom: 14px;">
+                The Mining Panel displays your active cloud processing power (**Gh/s**) and real-time BTC earnings converted into USD ($). 
+                <br><br>
+                Restart the session whenever the countdown timer finishes to keep mining continuous.
+            </p>
+            <button class="btn-primary" onclick="closeInfoModal()">Got It</button>
+        </div>
+    </div>
+
+    <!-- WITHDRAWAL MODAL -->
+    <div id="withdraw-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">Request Withdrawal</h3>
+            <span style="font-size: 11px; color: #fb923c; display: block; margin-bottom: 12px;">Minimum payout: $10.00 USD</span>
+
+            <label class="label-sm">Payout Method</label>
+            <select id="payout-method" class="input-field" onchange="togglePayoutField()">
+                <option value="btc">Bitcoin Wallet Address</option>
+                <option value="paypal">PayPal Email Address</option>
+            </select>
+
+            <label id="payout-label" class="label-sm">BTC Wallet Address</label>
+            <input type="text" id="payout-destination" class="input-field" placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa">
+            
+            <label class="label-sm">Amount in USD ($)</label>
+            <input type="number" id="withdraw-amount-usd" class="input-field" placeholder="10.00" min="10" step="0.01">
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="btn-primary" style="background-color: #27272a;" onclick="closeWithdrawModal()">Cancel</button>
+                <button class="btn-primary" onclick="processWithdrawal()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPGRADE PLAN MODAL -->
+    <div id="upgrade-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">Upgrade Hash Rate</h3>
+            <span style="font-size: 11px; color: #34d399; display: block; margin-bottom: 12px;">Cost: $3.00 USD for +100.00 Gh/s Boost</span>
+
+            <label class="label-sm">Select Payment Method</label>
+            <select class="input-field">
+                <option value="paypal">PayPal ($3.00 USD)</option>
+                <option value="card">Credit/Debit Card ($3.00 USD)</option>
+            </select>
+
+            <label class="label-sm">Billing Email / Account Info</label>
+            <input type="text" id="upgrade-email" class="input-field" placeholder="your-email@example.com">
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="btn-primary" style="background-color: #27272a;" onclick="closeUpgradeModal()">Cancel</button>
+                <button class="btn-primary" onclick="processUpgrade()">Pay & Upgrade ($3.00)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = localStorage.getItem('currentUserEmail');
+
+        if (!currentUser) {
+            window.location.href = 'auth.html';
+        } else {
+            document.getElementById('current-user-email').innerText = currentUser;
+            document.getElementById('ref-link-input').value = `https://btccloud.app/ref?id=${btoa(currentUser).substring(0, 8)}`;
+            
+            const pendingRef = localStorage.getItem(`pendingRef_${currentUser}`);
+            if (pendingRef) {
+                let currentHash = parseFloat(localStorage.getItem('baseHashRate')) || 26.50;
+                let currentBtc = parseFloat(localStorage.getItem('btcBalance')) || 0.00000262978;
+                
+                currentHash += 5.0;
+                currentBtc += (0.50 / 85000);
+                
+                localStorage.setItem('baseHashRate', currentHash);
+                localStorage.setItem('btcBalance', currentBtc);
+                localStorage.removeItem(`pendingRef_${currentUser}`);
+            }
+        }
+
+        const BTC_PRICE_USD = 85000;
+        const MIN_WITHDRAWAL_USD = 10.00;
+
+        const defaultNotes = document.getElementById('user-notes-input').value;
+        const savedNotes = localStorage.getItem(`userNotes_${currentUser}`) || defaultNotes;
+        document.getElementById('user-notes-input').value = savedNotes;
+
+        /** @param {string} notesText */
+        function saveUserNotes() {
+            const notesText = document.getElementById('user-notes-input').value;
+            localStorage.setItem(`userNotes_${currentUser}`, notesText);
+            showToast("Notes saved successfully! 📋");
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('currentUserEmail');
+            window.location.href = 'auth.html';
+        }
+
+        let btcBalance = parseFloat(localStorage.getItem('btcBalance')) || 0.00000262978;
+        let timerSeconds = parseInt(localStorage.getItem('timerSeconds')) || 1659;
+        let baseHashRate = parseFloat(localStorage.getItem('baseHashRate')) || 26.50;
+        let referralInvites = parseInt(localStorage.getItem('referralInvites')) || 0;
+        
+        let lastCashClaimTime = parseInt(localStorage.getItem(`lastCashClaim_${currentUser}`)) || 0;
+        let reward1ClaimTime = parseInt(localStorage.getItem(`reward1Claim_${currentUser}`)) || 0;
+        let reward2ClaimTime = parseInt(localStorage.getItem(`reward2Claim_${currentUser}`)) || 0;
+        let lastSpinTime = parseInt(localStorage.getItem(`lastSpinTime_${currentUser}`)) || 0;
+        let currentRotation = 0;
+
+        const miningBalanceEl = document.getElementById('mining-balance');
+        const miningUsdEl = document.getElementById('mining-usd');
+        const walletBalanceEl = document.getElementById('wallet-balance');
+        const walletUsdEl = document.getElementById('wallet-usd');
+        const headerTotalBtcEl = document.getElementById('header-total-btc');
+        const headerTotalUsdEl = document.getElementById('header-total-usd');
+        const hashRateDisplayEl = document.getElementById('hash-rate-display');
+        const referralCountEl = document.getElementById('referral-count');
+        const timerBtn = document.getElementById('timer-btn');
+        const dailyCashBtn = document.getElementById('daily-cash-btn');
+        const reward1Btn = document.getElementById('reward1-btn');
+        const reward2Btn = document.getElementById('reward2-btn');
+        const spinBtn = document.getElementById('spin-btn');
+        const modalSpinBtn = document.getElementById('modal-spin-action-btn');
+
+        function updateAllBalances() {
+            const formattedBtc = btcBalance.toFixed(11);
+            const usdVal = (btcBalance * BTC_PRICE_USD).toFixed(2);
+
+            miningBalanceEl.innerText = formattedBtc;
+            miningUsdEl.innerText = `≈ $${usdVal} USD`;
+
+            walletBalanceEl.innerText = formattedBtc;
+            walletUsdEl.innerText = `≈ $${usdVal} USD`;
+
+            headerTotalBtcEl.innerText = formattedBtc;
+            headerTotalUsdEl.innerText = `≈ $${usdVal} USD`;
+
+            hashRateDisplayEl.innerText = `${baseHashRate.toFixed(2)} Gh/s`;
+            referralCountEl.innerText = `${referralInvites} Invites`;
+        }
+
+        function checkRewardStatuses() {
+            const now = Date.now();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+
+            // Daily Cash Bonus Status
+            const cashPassed = now - lastCashClaimTime;
+            if (cashPassed < twentyFourHours && lastCashClaimTime !== 0) {
+                const rem = twentyFourHours - cashPassed;
+                const h = Math.floor(rem / (1000 * 60 * 60));
+                const m = Math.floor((rem % (1000 * 60 * 60)) / (1000 * 60));
+                dailyCashBtn.innerText = `Wait ${h}h ${m}m`;
+                dailyCashBtn.style.backgroundColor = "#27272a";
+                dailyCashBtn.disabled = true;
+                dailyCashBtn.style.cursor = "not-allowed";
+            } else {
+                dailyCashBtn.innerText = "🎁 Open Box (Claim $0.01)";
+                dailyCashBtn.style.backgroundColor = "#10b981";
+                dailyCashBtn.disabled = false;
+                dailyCashBtn.style.cursor = "pointer";
+            }
+
+            // Lucky Spin Wheel Status
+            const spinPassed = now - lastSpinTime;
+            if (spinPassed < twentyFourHours && lastSpinTime !== 0) {
+                const rem = twentyFourHours - spinPassed;
+                const h = Math.floor(rem / (1000 * 60 * 60));
+                const m = Math.floor((rem % (1000 * 60 * 60)) / (1000 * 60));
+                spinBtn.innerText = `Wait ${h}h ${m}m (Spun)`;
+                spinBtn.style.backgroundColor = "#27272a";
+                spinBtn.disabled = true;
+                spinBtn.style.cursor = "not-allowed";
+            } else {
+                spinBtn.innerText = "🎯 Open Lucky Wheel";
+                spinBtn.style.backgroundColor = "#a855f7";
+                spinBtn.disabled = false;
+                spinBtn.style.cursor = "pointer";
+            }
+
+            // Reward 1 (10.6 Gh/s) Status
+            const r1Passed = now - reward1ClaimTime;
+            if (r1Passed < twentyFourHours && reward1ClaimTime !== 0) {
+                const rem = twentyFourHours - r1Passed;
+                const h = Math.floor(rem / (1000 * 60 * 60));
+                const m = Math.floor((rem % (1000 * 60 * 60)) / (1000 * 60));
+                reward1Btn.innerText = `Wait ${h}h ${m}m`;
+                reward1Btn.style.backgroundColor = "#27272a";
+                reward1Btn.disabled = true;
+                reward1Btn.style.cursor = "not-allowed";
+            } else {
+                reward1Btn.innerText = "Claim 10.6 Gh/s";
+                reward1Btn.style.backgroundColor = "#6366f1";
+                reward1Btn.disabled = false;
+                reward1Btn.style.cursor = "pointer";
+            }
+
+            // Reward 2 (20.2 Gh/s) Status
+            const r2Passed = now - reward2ClaimTime;
+            if (r2Passed < twentyFourHours && reward2ClaimTime !== 0) {
+                const rem = twentyFourHours - r2Passed;
+                const h = Math.floor(rem / (1000 * 60 * 60));
+                const m = Math.floor((rem % (1000 * 60 * 60)) / (1000 * 60));
+                reward2Btn.innerText = `Wait ${h}h ${m}m`;
+                reward2Btn.style.backgroundColor = "#27272a";
+                reward2Btn.disabled = true;
+                reward2Btn.style.cursor = "not-allowed";
+            } else {
+                reward2Btn.innerText = "Claim 20.2 Gh/s";
+                reward2Btn.style.backgroundColor = "#6366f1";
+                reward2Btn.disabled = false;
+                reward2Btn.style.cursor = "pointer";
+            }
+        }
+
+        function claimDailyCash() {
+            const now = Date.now();
+            if (now - lastCashClaimTime < 24 * 60 * 60 * 1000 && lastCashClaimTime !== 0) return;
+
+            btcBalance += (0.01 / BTC_PRICE_USD);
+            lastCashClaimTime = now;
+            localStorage.setItem(`lastCashClaim_${currentUser}`, lastCashClaimTime);
+            localStorage.setItem('btcBalance', btcBalance);
+
+            updateAllBalances();
+            checkRewardStatuses();
+            showToast("Success! +$0.01 USD added to your balance 💵");
+        }
+
+        function openSpinModal() {
+            const now = Date.now();
+            if (now - lastSpinTime < 24 * 60 * 60 * 1000 && lastSpinTime !== 0) {
+                showToast("You have already spun the wheel today!");
+                return;
+            }
+            document.getElementById('spin-modal').classList.add('open');
+        }
+
+        function closeSpinModal() {
+            document.getElementById('spin-modal').classList.remove('open');
+        }
+
+        function executeSpin() {
+            const now = Date.now();
+            if (now - lastSpinTime < 24 * 60 * 60 * 1000 && lastSpinTime !== 0) return;
+
+            modalSpinBtn.disabled = true;
+            modalSpinBtn.style.backgroundColor = "#27272a";
+            modalSpinBtn.innerText = "SPINNING...";
+
+            lastSpinTime = now;
+            localStorage.setItem(`lastSpinTime_${currentUser}`, lastSpinTime);
+
+            // Animate wheel spin (adds 5 to 10 extra full rotations)
+            const randomSpinDegrees = Math.floor(1800 + Math.random() * 1800);
+            currentRotation += randomSpinDegrees;
+            
+            const wheelDisc = document.getElementById('wheel-disc');
+            wheelDisc.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                const rand = Math.random();
+                let wonUsd = 0;
+
+                if (rand < 0.50) {
+                    wonUsd = 0.001;
+                } else if (rand < 0.85) {
+                    wonUsd = 0.00;
+                } else {
+                    wonUsd = parseFloat((Math.random() * (0.005 - 0.002) + 0.002).toFixed(4));
+                }
+
+                if (wonUsd > 0) {
+                    btcBalance += (wonUsd / BTC_PRICE_USD);
+                    localStorage.setItem('btcBalance', btcBalance);
+                    updateAllBalances();
+                    showToast(`🎉 You won $${wonUsd.toFixed(3)} USD on the spin!`);
+                } else {
+                    showToast("❌ Try again next time! Better luck tomorrow.");
+                }
+
+                closeSpinModal();
+                checkRewardStatuses();
+                modalSpinBtn.innerText = "SPIN WHEEL NOW";
+            }, 3000);
+        }
+
+        /** 
+         * @param {string} rewardKey 
+         * @param {number} ghAmount 
+         */
+        function claimReward(rewardKey, ghAmount) {
+            const now = Date.now();
+            
+            if (rewardKey === 'reward1') {
+                if (now - reward1ClaimTime < 24 * 60 * 60 * 1000 && reward1ClaimTime !== 0) return;
+                reward1ClaimTime = now;
+                localStorage.setItem(`reward1Claim_${currentUser}`, reward1ClaimTime);
+            } else if (rewardKey === 'reward2') {
+                if (now - reward2ClaimTime < 24 * 60 * 60 * 1000 && reward2ClaimTime !== 0) return;
+                reward2ClaimTime = now;
+                localStorage.setItem(`reward2Claim_${currentUser}`, reward2ClaimTime);
+            }
+
+            baseHashRate += ghAmount;
+            localStorage.setItem('baseHashRate', baseHashRate);
+
+            updateAllBalances();
+            checkRewardStatuses();
+            showToast(`Bonus +${ghAmount} Gh/s Added Successfully! 🎁`);
+        }
+
+        updateAllBalances();
+        checkRewardStatuses();
+
+        setInterval(() => {
+            if (timerSeconds > 0) {
+                timerSeconds--;
+                let m = Math.floor(timerSeconds / 60);
+                let s = timerSeconds % 60;
+                timerBtn.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+                btcBalance += (0.00000000001 * (baseHashRate / 26.50));
+                updateAllBalances();
+
+                localStorage.setItem('btcBalance', btcBalance);
+                localStorage.setItem('timerSeconds', timerSeconds);
+                localStorage.setItem('baseHashRate', baseHashRate);
+                localStorage.setItem('referralInvites', referralInvites);
+            }
+            checkRewardStatuses();
+        }, 1000);
+
+        function copyReferralLink() {
+            const refInput = document.getElementById('ref-link-input');
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+
+            referralInvites += 1;
+            baseHashRate += 5.0;
+            btcBalance += (0.50 / BTC_PRICE_USD);
+
+            updateAllBalances();
+            showToast("Link Copied! Reward: +5.0 Gh/s & +$0.50 USD 👥");
+        }
+
+        function openInfoModal() { document.getElementById('info-modal').classList.add('open'); }
+        function closeInfoModal() { document.getElementById('info-modal').classList.remove('open'); }
+
+        function openWithdrawModal() { document.getElementById('withdraw-modal').classList.add('open'); }
+        function closeWithdrawModal() { document.getElementById('withdraw-modal').classList.remove('open'); }
+
+        function togglePayoutField() {
+            const method = document.getElementById('payout-method').value;
+            const label = document.getElementById('payout-label');
+            const input = document.getElementById('payout-destination');
+
+            if (method === 'paypal') {
+                label.innerText = "PayPal Email Address";
+                input.placeholder = "user@paypal.com";
+            } else {
+                label.innerText = "BTC Wallet Address";
+                input.placeholder = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa";
+            }
+        }
+
+        function processWithdrawal() {
+            const method = document.getElementById('payout-method').value;
+            const destination = document.getElementById('payout-destination').value.trim();
+            const requestedUsd = parseFloat(document.getElementById('withdraw-amount-usd').value);
+            const currentUsdValue = btcBalance * BTC_PRICE_USD;
+
+            if (!destination || isNaN(requestedUsd)) {
+                alert("Please fill in all withdrawal details.");
+                return;
+            }
+
+            if (requestedUsd < MIN_WITHDRAWAL_USD) {
+                alert(`Minimum withdrawal limit is $10.00 USD. You entered $${requestedUsd.toFixed(2)}.`);
+                return;
+            }
+
+            if (requestedUsd > currentUsdValue) {
+                alert(`Insufficient funds! Your balance is worth $${currentUsdValue.toFixed(2)} USD.`);
+                return;
+            }
+
+            closeWithdrawModal();
+            showToast(`Withdrawal via ${method.toUpperCase()} submitted successfully!`);
+        }
+
+        function openUpgradeModal() { document.getElementById('upgrade-modal').classList.add('open'); }
+        function closeUpgradeModal() { document.getElementById('upgrade-modal').classList.remove('open'); }
+
+        function processUpgrade() {
+            const email = document.getElementById('upgrade-email').value.trim();
+            if (!email) {
+                alert("Please provide your billing details/email.");
+                return;
+            }
+
+            closeUpgradeModal();
+            baseHashRate += 100.00;
+            updateAllBalances();
+            showToast("Payment Successful! +100 Gh/s Boost Activated ⚡");
+        }
+
+        /** @param {string} message */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        /** 
+         * @param {string} tabName 
+         * @param {HTMLElement} btnElement 
+         */
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(`screen-${tabName}`).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        /** @param {HTMLElement} el */
+        function toggleFAQ(el) { el.classList.toggle('open'); }
+        function toggleMiningState() { showToast("Mining session is active."); }
+
+        function resetData() {
+            localStorage.clear();
+            window.location.href = 'auth.html';
+        }
+    </script>
+</body>
+</html>
