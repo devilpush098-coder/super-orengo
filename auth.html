@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Access - Bitcoin Mining</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -180,14 +186,14 @@
         <label class="label-sm">Password</label>
         <input type="password" id="auth-password" class="input-field" placeholder="••••••••">
 
-        <!-- TERMS & CONDITIONS (NOW PLACED AFTER PASSWORD IN REGISTRATION) -->
+        <!-- TERMS & CONDITIONS -->
         <div id="terms-section" style="display: none;">
             <label class="label-sm">Terms & Conditions (Scroll to bottom to unlock)</label>
             <div id="terms-scroll-box" class="terms-box" onscroll="checkScrollPosition()">
-                <strong>1. Simulation Disclaimer:</strong> This application is a simulated cloud mining dashboard built for entertainment and educational purposes. All Bitcoin and USD balances are virtual representations.<br><br>
-                <strong>2. Account Security:</strong> You are responsible for keeping your account credentials secure. Local storage data is tied directly to your device browser cache.<br><br>
-                <strong>3. Payouts & Upgrades:</strong> Payout thresholds ($10.00 min) and premium purchases (+100 Gh/s) operate under simulated transactional logic within the app ecosystem.<br><br>
-                <strong>4. Policy Acceptance:</strong> By checking the box below, you agree to abide by community guidelines and platform rules.
+                <strong>1. Simulation Disclaimer:</strong> This application is a simulated cloud mining dashboard built for entertainment and educational purposes.<br><br>
+                <strong>2. Account Security:</strong> You are responsible for keeping your account credentials secure.<br><br>
+                <strong>3. Payouts & Upgrades:</strong> Payout thresholds and premium purchases operate under simulated transactional logic.<br><br>
+                <strong>4. Policy Acceptance:</strong> By checking the box below, you agree to abide by community guidelines.
             </div>
 
             <div class="terms-container">
@@ -209,30 +215,40 @@
     <div id="forgot-modal" class="modal-overlay">
         <div class="modal-card">
             <h3 style="font-size: 16px; margin-bottom: 6px;">Reset Password</h3>
-            <span style="font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 12px;">Enter your registered Email and Username to reset.</span>
+            <span style="font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 12px;">Enter your registered Email to reset password.</span>
 
             <label class="label-sm">Email Address</label>
             <input type="email" id="reset-email" class="input-field" placeholder="user@example.com">
 
-            <label class="label-sm">Registered Username</label>
-            <input type="text" id="reset-user" class="input-field" placeholder="Satoshi">
-
-            <label class="label-sm">New Password</label>
-            <input type="password" id="reset-new-pass" class="input-field" placeholder="••••••••">
-
             <div style="display: flex; gap: 8px; margin-top: 8px;">
                 <button class="btn-primary" style="background-color: #27272a;" onclick="closeForgotModal()">Cancel</button>
-                <button class="btn-primary" onclick="processPasswordReset()">Save New Password</button>
+                <button class="btn-primary" onclick="processPasswordReset()">Reset Password</button>
             </div>
         </div>
     </div>
 
+    <!-- FIREBASE & APP LOGIC SCRIPT -->
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3aVY-UknaJhL2jLSBESF2vMH-hKUgdf8",
+            authDomain: "superorengo-a45f6.firebaseapp.com",
+            projectId: "superorengo-a45f6",
+            storageBucket: "superorengo-a45f6.firebasestorage.app",
+            messagingSenderId: "467264951244",
+            appId: "1:467264951244:web:e0e4b0b4a73103b8f94369",
+            measurementId: "G-1JQKMGM3K4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         let isRegisterMode = false;
 
-        if (localStorage.getItem('currentUserEmail')) {
-            window.location.href = 'index.html';
-        }
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
 
         function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
@@ -268,31 +284,19 @@
 
         function processPasswordReset() {
             const email = document.getElementById('reset-email').value.trim();
-            const username = document.getElementById('reset-user').value.trim();
-            const newPassword = document.getElementById('reset-new-pass').value.trim();
-
-            if (!email || !username || !newPassword) {
-                alert("Please complete all verification fields.");
+            if (!email) {
+                alert("Please enter your email address.");
                 return;
             }
 
-            const storedData = localStorage.getItem(`user_${email}`);
-            if (!storedData) {
-                alert("Account with this email does not exist.");
-                return;
-            }
-
-            const userObj = JSON.parse(storedData);
-            if (userObj.username.toLowerCase() !== username.toLowerCase()) {
-                alert("Username does not match our records for this email.");
-                return;
-            }
-
-            userObj.password = newPassword;
-            localStorage.setItem(`user_${email}`, JSON.stringify(userObj));
-
-            alert("Password updated successfully! You can now log in with your new password.");
-            closeForgotModal();
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    alert("Password reset email sent! Check your inbox.");
+                    closeForgotModal();
+                })
+                .catch((error) => {
+                    alert("Error: " + error.message);
+                });
         }
 
         function handleAuthSubmit() {
@@ -306,7 +310,6 @@
 
             if (isRegisterMode) {
                 const username = document.getElementById('reg-user').value.trim();
-                const referralCode = document.getElementById('reg-ref').value.trim();
                 const termsAccepted = document.getElementById('terms-checkbox').checked;
 
                 if (!username) {
@@ -319,35 +322,33 @@
                     return;
                 }
 
-                const userData = { 
-                    password, 
-                    username, 
-                    referralCode,
-                    initialBonus: referralCode ? 0.50 : 0.00 
-                };
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const userId = userCredential.user.uid;
+                        return db.collection("users").doc(userId).set({
+                            email: email,
+                            username: username,
+                            balance: 0,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        alert("Registration successful!");
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        alert("Registration Error: " + error.message);
+                    });
 
-                localStorage.setItem(`user_${email}`, JSON.stringify(userData));
-                
-                if (referralCode) {
-                    localStorage.setItem(`pendingRef_${email}`, referralCode);
-                }
-
-                alert("Registration successful! Switching to sign in...");
-                toggleAuthMode();
             } else {
-                const storedData = localStorage.getItem(`user_${email}`);
-                if (!storedData) {
-                    alert("Account not found. Please register first.");
-                    return;
-                }
-                const userObj = JSON.parse(storedData);
-                if (userObj.password !== password) {
-                    alert("Incorrect password.");
-                    return;
-                }
-
-                localStorage.setItem('currentUserEmail', email);
-                window.location.href = 'index.html';
+                auth.signInWithEmailAndPassword(email, password)
+                    .then(() => {
+                        alert("Login successful!");
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        alert("Login Error: " + error.message);
+                    });
             }
         }
     </script>
