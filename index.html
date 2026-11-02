@@ -27,6 +27,26 @@
             max-width: 480px;
             margin: 0 auto;
             min-height: 100vh;
+            position: relative;
+        }
+
+        /* Top Progress Bar for Active Mining */
+        .top-progress-container {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background-color: #2c2c2e;
+            z-index: 1000;
+            max-width: 480px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .top-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #5856d6, #a855f7);
+            transition: width 1s linear;
         }
 
         /* Views management */
@@ -39,6 +59,7 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 16px;
+            margin-top: 6px;
         }
 
         .avatar-circle {
@@ -89,7 +110,7 @@
         }
 
         .total-btc-label { font-size: 12px; color: #8e8e93; margin-bottom: 6px; }
-        .total-btc-amount { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+        .total-btc-amount { font-size: 24px; font-weight: 700; margin-bottom: 4px; font-family: monospace; }
         .usd-equivalent { font-size: 13px; color: #8e8e93; margin-bottom: 16px; }
 
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -98,12 +119,13 @@
 
         .mining-balance-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
         .btc-icon { width: 28px; height: 28px; background-color: #f7931a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ffffff; }
-        .panel-btc-val { font-size: 20px; font-weight: bold; }
+        .panel-btc-val { font-size: 20px; font-weight: bold; font-family: monospace; }
 
         /* Hardware & Timer */
         .hardware-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .gpu-img-container { width: 90px; height: 42px; background: #27272a; border-radius: 8px; display: flex; align-items: center; justify-content: space-around; padding: 4px; border: 1px solid #3f3f46; }
-        .gpu-fan { width: 20px; height: 20px; border: 2px dashed #71717a; border-radius: 50%; animation: spin 3s linear infinite; }
+        .gpu-fan { width: 20px; height: 20px; border: 2px dashed #71717a; border-radius: 50%; }
+        .gpu-fan.active { animation: spin 1s linear infinite; border-color: #5856d6; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         .hashrate-val { font-size: 15px; font-weight: 700; margin-bottom: 4px; text-align: right; }
@@ -114,11 +136,11 @@
 
         .btn-action {
             width: 100%; background-color: #5856d6; color: #ffffff; border: none;
-            padding: 14px; border-radius: 12px; font-weight: 600; font-size: 15px;
+            padding: 14px; border-radius: 12px; font-weight: 700; font-size: 18px; letter-spacing: 1px;
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-action:active { opacity: 0.9; transform: scale(0.99); }
-        .btn-action:disabled { background-color: #3f3f46; color: #a1a1aa; cursor: not-allowed; }
+        .btn-action:disabled { background-color: #4338ca; color: #ffffff; cursor: default; }
 
         /* Rewards Grid */
         .rewards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
@@ -127,6 +149,15 @@
         .reward-boost-val { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
         .btn-boost { width: 100%; background-color: #5856d6; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
         .btn-boost:disabled { background-color: #27272a; color: #71717a; cursor: not-allowed; }
+
+        /* FAQs Accordion */
+        .faq-section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+        .faq-item { background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+        .faq-question { padding: 14px 16px; font-size: 13px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .faq-answer { padding: 0 16px 14px 16px; font-size: 12px; color: #8e8e93; line-height: 1.5; display: none; }
+        .faq-item.open .faq-answer { display: block; }
+        .faq-item.open .chevron { transform: rotate(180deg); }
+        .chevron { transition: transform 0.2s; font-size: 12px; color: #8e8e93; }
 
         /* Spin Wheel Section */
         .spin-container { text-align: center; padding: 10px 0; }
@@ -141,14 +172,6 @@
             width: 75px; height: 75px; background: #1c1c1e; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-size: 22px;
         }
-
-        /* Wallet Section Tiers */
-        .tiers-row { display: flex; gap: 8px; margin-bottom: 16px; }
-        .tier-btn {
-            flex: 1; background-color: #27272a; border: 1px solid #3f3f46; color: #ffffff;
-            padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer;
-        }
-        .tier-btn.selected { background-color: #5856d6; border-color: #5856d6; }
 
         /* Referral Box */
         .ref-box { background: #27272a; border-radius: 10px; padding: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -176,6 +199,11 @@
 </head>
 <body>
 
+    <!-- Top Progress Bar -->
+    <div id="top-progress-bar" class="top-progress-container">
+        <div id="top-progress-fill" class="top-progress-fill"></div>
+    </div>
+
     <!-- ================= HOME VIEW ================= -->
     <div id="view-home" class="view-section active-view">
         <div class="user-header">
@@ -195,7 +223,7 @@
         <!-- MINING SUB-TAB CONTENT -->
         <div id="subcontent-mining">
             <div class="total-btc-label">Total BTC</div>
-            <div class="total-btc-amount"><span id="total-btc-val">0.00000000</span> <span style="font-size: 13px; color: #8e8e93;">BTC</span></div>
+            <div class="total-btc-amount"><span id="total-btc-val">0.00000000000</span> <span style="font-size: 13px; color: #8e8e93;">BTC</span></div>
             <div class="usd-equivalent" id="usd-eq-display">≈ $0.00 USD</div>
 
             <!-- Mining Panel -->
@@ -207,13 +235,13 @@
 
                 <div class="mining-balance-row">
                     <div class="btc-icon">₿</div>
-                    <div class="panel-btc-val" id="panel-btc-val">0.00000000 <span style="font-size: 12px; color: #8e8e93;">BTC</span></div>
+                    <div class="panel-btc-val" id="panel-btc-val">0.00000000000 <span style="font-size: 12px; color: #8e8e93;">BTC</span></div>
                 </div>
 
                 <div class="hardware-row">
                     <div class="gpu-img-container">
-                        <div class="gpu-fan"></div>
-                        <div class="gpu-fan"></div>
+                        <div id="fan1" class="gpu-fan"></div>
+                        <div id="fan2" class="gpu-fan"></div>
                     </div>
                     <div>
                         <div class="hashrate-val" id="hashrate-display">15.90 Gh/s</div>
@@ -224,30 +252,67 @@
                     </div>
                 </div>
 
-                <p id="mining-status-notice" class="notice-text">Mining runs for 30 minutes per session. Click start to begin.</p>
+                <p id="mining-status-notice" class="notice-text">Mining will stop when the timer stops. You need to restart it manually to continue mining.</p>
 
                 <button id="start-mining-btn" class="btn-action" onclick="startMiningSession()">
-                    <span>📺</span>
-                    <span id="mining-btn-text">Start Mining (30 Mins)</span>
+                    <span id="mining-btn-text">Start Mining (ad)</span>
                 </button>
             </div>
 
             <!-- Dual Daily Boost Rewards (6h cooldown) -->
             <div class="rewards-grid">
                 <div class="reward-card">
-                    <div class="reward-title">Hashrate Reward</div>
-                    <div class="reward-boost-val">🎁 +10.6 Gh/s</div>
-                    <button id="boost-btn-1" class="btn-boost" onclick="claimHashBoost(1, 10.6)">Boost (6h)</button>
+                    <div class="reward-title">Daily Reward</div>
+                    <div class="reward-boost-val">🎁 10.6 Gh/s</div>
+                    <button id="boost-btn-1" class="btn-boost" onclick="claimHashBoost(1, 10.6)">Boost (ad)</button>
                 </div>
                 <div class="reward-card">
-                    <div class="reward-title">Hashrate Reward</div>
-                    <div class="reward-boost-val">🎁 +20.2 Gh/s</div>
-                    <button id="boost-btn-2" class="btn-boost" onclick="claimHashBoost(2, 20.2)">Boost (6h)</button>
+                    <div class="reward-title">Daily Reward</div>
+                    <div class="reward-boost-val">🎁 20.2 Gh/s</div>
+                    <button id="boost-btn-2" class="btn-boost" onclick="claimHashBoost(2, 20.2)">Boost (ad)</button>
                 </div>
             </div>
 
+            <!-- FAQs SECTION -->
+            <div class="faq-section-title">FAQs</div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">What is Bitcoin Cloud Mining? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Bitcoin cloud mining allows users to participate in cryptocurrency mining remotely using shared processing power from specialized cloud data centers without owning physical mining hardware.</div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">How is computing power connected to Bitcoin? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Computing power (hashrate) is used to solve complex cryptographic algorithms required to validate transaction blocks on the Bitcoin blockchain, earning rewards in return.</div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">Can I mine Bitcoin remotely? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Yes, through cloud mining dashboards, you can allocate cloud hashrate and claim mining rewards directly to your digital account balance.</div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">What is a Hashrate? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Hashrate represents the speed at which a mining device performs cryptographic calculations. Higher Gh/s or Th/s means faster reward accumulation.</div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">Can You Earn Profit from Bitcoin Cloud Mining? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Profits depend on total network difficulty, cloud hashrate allocation, and active reward multipliers enabled on your profile.</div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">Is It Possible to Increase Remote Bitcoin Mining Speed? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Yes, by claiming daily speed boost rewards, upgrading hashrate packages, or keeping active session timers active.</div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">Is Bitcoin Mining Legal? <span class="chevron">▼</span></div>
+                <div class="faq-answer">Bitcoin mining is legal in most international jurisdictions, provided standard terms and platform policies are observed.</div>
+            </div>
+
             <!-- Spin Wheel Daily Game -->
-            <div class="card-panel spin-container">
+            <div class="card-panel spin-container" style="margin-top: 16px;">
                 <div class="panel-title" style="margin-bottom: 6px;">Daily Lucky Spin Wheel</div>
                 <p style="font-size: 11px; color: #8e8e93; margin-bottom: 14px;">Win up to $0.005 USD once per day!</p>
                 <div class="spin-wheel-box">
@@ -289,7 +354,7 @@
         
         <div class="card-panel">
             <div class="total-btc-label">Available Balance</div>
-            <div class="total-btc-amount" id="wallet-btc-display">0.00000000 BTC</div>
+            <div class="total-btc-amount" id="wallet-btc-display">0.00000000000 BTC</div>
             <div class="usd-equivalent" id="wallet-usd-display">≈ $0.00 USD</div>
             <p style="font-size: 11px; color: #ef4444; margin-bottom: 14px;">Minimum withdrawal limit: $10.00 USD via PayPal</p>
 
@@ -297,13 +362,6 @@
             <input type="email" id="paypal-email-input" placeholder="your-paypal@email.com" style="width:100%; background:#27272a; border:1px solid #3f3f46; color:#fff; padding:12px; border-radius:10px; font-size:13px; outline:none; margin-bottom:14px;">
 
             <button class="btn-action" onclick="requestPayPalWithdrawal()">Withdraw via PayPal ($10 Min)</button>
-        </div>
-
-        <div class="card-panel">
-            <div class="panel-title" style="margin-bottom: 10px;">Transaction History</div>
-            <div id="tx-history-list" style="font-size: 12px; color: #8e8e93; text-align: center; padding: 10px;">
-                No withdrawal transactions recorded yet.
-            </div>
         </div>
     </div>
 
@@ -338,18 +396,6 @@
             </div>
         </div>
 
-        <div class="settings-item" onclick="alert('Top miners leaderboard coming soon!')">
-            <span class="settings-label">Top Miners</span>
-            <span>›</span>
-        </div>
-        <div class="settings-item" onclick="alert('Support help desk: support@superorengo.app')">
-            <span class="settings-label">Help & Support</span>
-            <span>›</span>
-        </div>
-        <div class="settings-item" onclick="alert('App version 2.4.0 (Live Build)')">
-            <span class="settings-label">App Version</span>
-            <span style="font-size:12px; color:#8e8e93;">v2.4.0</span>
-        </div>
         <div class="settings-item" onclick="logoutUser()" style="border-color: #ef444422;">
             <span class="settings-label" style="color: #ef4444;">Logout Account</span>
             <span style="color: #ef4444;">›</span>
@@ -403,7 +449,7 @@
             miningEndTime: 0
         };
 
-        const BTC_USD_RATE = 77061.0; // Fixed conversion reference rate
+        const BTC_USD_RATE = 77061.0;
 
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -417,7 +463,7 @@
                 userRef.get().then((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
-                        userDataCache.balance = data.balance || 0;
+                        userDataCache.balance = typeof data.balance === 'number' ? data.balance : 0;
                         userDataCache.hashrate = data.hashrate || 15.90;
                         userDataCache.refCode = data.refCode || ('ORENGO' + Math.floor(1000 + Math.random() * 9000));
                         userDataCache.referredBy = data.referredBy || "";
@@ -425,13 +471,8 @@
                         userDataCache.lastBoost1Time = data.lastBoost1Time || 0;
                         userDataCache.lastBoost2Time = data.lastBoost2Time || 0;
                         userDataCache.miningEndTime = data.miningEndTime || 0;
-
-                        if(!data.refCode) {
-                            userRef.update({ refCode: userDataCache.refCode });
-                        }
                     } else {
                         userDataCache.refCode = 'ORENGO' + Math.floor(1000 + Math.random() * 9000);
-                        // Starts new user completely fresh at 0 balance
                         userDataCache.balance = 0;
                         userRef.set({
                             email: user.email,
@@ -460,7 +501,6 @@
             }
         });
 
-        // Main Navigation switching
         function switchMainView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -469,7 +509,6 @@
             document.getElementById('nav-' + viewName).classList.add('active');
         }
 
-        // Sub-Tab Switching (Mining / Referral)
         function switchSubTab(tabName) {
             document.getElementById('stab-mining').classList.remove('active');
             document.getElementById('stab-referral').classList.remove('active');
@@ -480,30 +519,52 @@
             document.getElementById('subcontent-' + tabName).style.display = 'block';
         }
 
-        // UI Refresh Loop
+        function toggleFaq(element) {
+            element.classList.toggle('open');
+        }
+
+        // Live App Loop & Countdown Button Format
         function initAppLoop() {
             setInterval(() => {
                 const now = Date.now();
+                const topBar = document.getElementById('top-progress-bar');
+                const topFill = document.getElementById('top-progress-fill');
+                const fan1 = document.getElementById('fan1');
+                const fan2 = document.getElementById('fan2');
+                const btn = document.getElementById('start-mining-btn');
+                const btnText = document.getElementById('mining-btn-text');
+
                 if (userDataCache.miningEndTime > now) {
-                    const remainingSec = Math.floor((userDataCache.miningEndTime - now) / 1000);
-                    const mins = Math.floor(remainingSec / 60);
-                    const secs = remainingSec % 60;
+                    const totalSessionMs = 30 * 60 * 1000;
+                    const remainingMs = userDataCache.miningEndTime - now;
+                    const elapsedMs = totalSessionMs - remainingMs;
+                    const progressPercent = Math.min(100, (elapsedMs / totalSessionMs) * 100);
+
+                    topBar.style.display = 'block';
+                    topFill.style.width = progressPercent + '%';
+                    fan1.classList.add('active');
+                    fan2.classList.add('active');
+
+                    const remainingSec = Math.floor(remainingMs / 1000);
+                    const mins = String(Math.floor(remainingSec / 60)).padStart(2, '0');
+                    const secs = String(remainingSec % 60).padStart(2, '0');
                     
-                    // Accumulate reward per second based on hashrate
-                    const earnedPerSec = (0.0000000005 * (userDataCache.hashrate / 15.90));
+                    // Boosted live counter increment every second
+                    const earnedPerSec = 0.00000500 * (userDataCache.hashrate / 15.90);
                     userDataCache.balance += earnedPerSec;
 
-                    document.getElementById('mining-btn-text').innerText = `Mining Active (${mins}m ${secs}s left)`;
-                    document.getElementById('start-mining-btn').disabled = true;
+                    btnText.innerText = `${mins}:${secs}`;
+                    btn.disabled = true;
                     
                     syncToFirestore();
                     updateAllUI();
-                } else if (userDataCache.miningEndTime !== 0 && userDataCache.miningEndTime <= now) {
-                    userDataCache.miningEndTime = 0;
-                    document.getElementById('mining-btn-text').innerText = "Start Mining (30 Mins)";
-                    document.getElementById('start-mining-btn').disabled = false;
-                    document.getElementById('mining-status-notice').innerText = "Mining session ended! Click start to run another 30-minute block.";
-                    syncToFirestore();
+                } else {
+                    topBar.style.display = 'none';
+                    fan1.classList.remove('active');
+                    fan2.classList.remove('active');
+                    btnText.innerText = "Start Mining (ad)";
+                    btn.disabled = false;
+                    document.getElementById('mining-status-notice').innerText = "Mining will stop when the timer stops. You need to restart it manually to continue mining.";
                     updateAllUI();
                 }
             }, 1000);
@@ -512,7 +573,7 @@
 
         function updateAllUI() {
             const btcStr = userDataCache.balance.toFixed(8);
-            const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(2);
+            const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(4);
 
             document.getElementById('total-btc-val').innerText = btcStr;
             document.getElementById('panel-btc-val').innerText = btcStr + " BTC";
@@ -523,15 +584,14 @@
             document.getElementById('hashrate-display').innerText = userDataCache.hashrate.toFixed(2) + " Gh/s";
         }
 
-        // 30-Minute Mining Session Logic
         function startMiningSession() {
             const thirtyMinsMs = 30 * 60 * 1000;
             userDataCache.miningEndTime = Date.now() + thirtyMinsMs;
             document.getElementById('mining-status-notice').innerText = "Mining session in progress for 30 minutes...";
             syncToFirestore();
+            updateAllUI();
         }
 
-        // 6-Hour Boost Cooldown Logic
         function claimHashBoost(boostId, ghAmount) {
             const now = Date.now();
             const cooldownMs = 6 * 60 * 60 * 1000;
@@ -552,7 +612,6 @@
             alert(`Successfully boosted speed by +${ghAmount} Gh/s!`);
         }
 
-        // Spin Wheel Logic (Once per day, probabilities: $0.005, $0.001, Try Again)
         function spinDailyWheel() {
             const todayStr = new Date().toDateString();
             if (userDataCache.lastSpinDate === todayStr) {
@@ -562,7 +621,6 @@
 
             userDataCache.lastSpinDate = todayStr;
 
-            // Probabilities: 15% chance $0.005, 60% chance $0.001, 25% chance Try Again
             const rand = Math.random();
             let prizeUsd = 0;
             let msg = "";
@@ -587,7 +645,6 @@
             updateAllUI();
         }
 
-        // Referral Code Copy & Claim ($0.50 Bonus on both sides)
         function copyReferralCode() {
             navigator.clipboard.writeText(userDataCache.refCode);
             alert("Referral code copied to clipboard: " + userDataCache.refCode);
@@ -608,7 +665,6 @@
                 return;
             }
 
-            // $0.50 bonus converted to BTC for both parties
             const bonusUsd = 0.50;
             const bonusBtc = bonusUsd / BTC_USD_RATE;
 
@@ -620,7 +676,6 @@
             alert("Referral code applied successfully! $0.50 USD bonus added to your balance.");
         }
 
-        // PayPal Minimum $10 Withdrawal
         function requestPayPalWithdrawal() {
             const paypalEmail = document.getElementById('paypal-email-input').value.trim();
             const currentUsdVal = userDataCache.balance * BTC_USD_RATE;
