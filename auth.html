@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Access - Bitcoin Mining</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Authentication - Bitcoin Cloud Mining</title>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -22,212 +22,133 @@
         body {
             background-color: #121214;
             color: #ffffff;
-            padding: 16px;
+            padding: 20px;
             max-width: 480px;
             margin: 0 auto;
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
         }
 
         .auth-card {
-            background-color: #1a1a1e;
-            border: 1px solid #27272a;
+            background-color: #1c1c1e;
+            border: 1px solid #2c2c2e;
             border-radius: 20px;
-            padding: 24px 20px;
-            width: 100%;
+            padding: 24px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        header {
+        .auth-title {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .auth-subtitle {
+            font-size: 13px;
+            color: #8e8e93;
             text-align: center;
             margin-bottom: 20px;
         }
 
-        .app-icon {
-            width: 52px; height: 52px;
-            background: linear-gradient(135deg, #f97316, #a855f7);
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 10px auto;
-            font-weight: bold; font-size: 22px;
-            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
-            animation: pulseGlow 2.5s infinite alternate;
+        .form-group {
+            margin-bottom: 14px;
         }
 
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.3); }
-            100% { box-shadow: 0 0 22px rgba(168, 85, 247, 0.7); }
+        .form-label {
+            font-size: 12px;
+            color: #8e8e93;
+            display: block;
+            margin-bottom: 6px;
         }
 
-        .label-sm { color: #a1a1aa; font-size: 12px; display: block; margin-bottom: 4px; }
-
-        .input-field {
+        .form-input {
             width: 100%;
-            background-color: #25252b;
+            background-color: #27272a;
             border: 1px solid #3f3f46;
             color: #ffffff;
             padding: 12px;
-            border-radius: 10px;
-            margin: 6px 0 12px 0;
-            font-size: 13px;
+            border-radius: 12px;
+            font-size: 14px;
             outline: none;
         }
 
-        .input-field:focus { border-color: #6366f1; }
-
-        .terms-box {
-            background-color: #25252b;
-            border: 1px solid #3f3f46;
-            border-radius: 10px;
-            height: 100px;
-            overflow-y: scroll;
-            padding: 10px;
-            font-size: 11px;
-            color: #a1a1aa;
-            line-height: 1.4;
-            margin: 6px 0 8px 0;
+        .form-input:focus {
+            border-color: #5856d6;
         }
 
-        .terms-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 14px;
-            font-size: 12px;
-            color: #d4d4d8;
-        }
-
-        .terms-container input {
-            accent-color: #6366f1;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .terms-container input:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .forgot-link {
-            display: block;
-            text-align: right;
-            font-size: 11px;
-            color: #6366f1;
-            cursor: pointer;
-            margin-top: -6px;
-            margin-bottom: 12px;
-        }
-
-        .btn-primary {
+        .btn-submit {
             width: 100%;
-            background-color: #6366f1;
+            background-color: #5856d6;
             color: #ffffff;
             border: none;
-            padding: 12px;
+            padding: 14px;
             border-radius: 12px;
             font-weight: 600;
             font-size: 15px;
             cursor: pointer;
-            margin-top: 6px;
+            margin-top: 10px;
             transition: all 0.2s;
         }
 
-        .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+        .btn-submit:active {
+            opacity: 0.9;
+            transform: scale(0.99);
+        }
 
-        .switch-text {
+        .toggle-text {
             text-align: center;
-            font-size: 12px;
-            color: #a1a1aa;
+            font-size: 13px;
+            color: #8e8e93;
             margin-top: 16px;
+        }
+
+        .toggle-link {
+            color: #5856d6;
             cursor: pointer;
-        }
-
-        .switch-text span { color: #6366f1; font-weight: 600; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.75);
-            display: none; align-items: center; justify-content: center;
-            z-index: 200; padding: 20px;
-        }
-
-        .modal-overlay.open { display: flex; }
-
-        .modal-card {
-            background-color: #1a1a1e; border: 1px solid #3f3f46;
-            border-radius: 20px; padding: 20px; width: 100%; max-width: 360px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
     <div class="auth-card">
-        <header>
-            <div class="app-icon">₿</div>
-            <h2 id="auth-title" style="font-size: 20px;">Welcome Back</h2>
-            <span class="label-sm" style="margin-top: 4px;">Sign in to start mining</span>
-        </header>
+        <div id="form-title" class="auth-title">Create Account</div>
+        <div id="form-subtitle" class="auth-subtitle">Sign up to start cloud mining</div>
 
-        <div id="register-fields" style="display: none;">
-            <label class="label-sm">Username</label>
-            <input type="text" id="reg-user" class="input-field" placeholder="Satoshi">
-
-            <label class="label-sm">Referral Code (Optional)</label>
-            <input type="text" id="reg-ref" class="input-field" placeholder="e.g. ABC123XYZ">
+        <!-- Username field (Visible only on Register) -->
+        <div class="form-group" id="username-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="username-input" class="form-input" placeholder="Enter username">
         </div>
 
-        <label class="label-sm">Email Address</label>
-        <input type="email" id="auth-email" class="input-field" placeholder="user@example.com">
-
-        <label class="label-sm">Password</label>
-        <input type="password" id="auth-password" class="input-field" placeholder="••••••••">
-
-        <!-- TERMS & CONDITIONS -->
-        <div id="terms-section" style="display: none;">
-            <label class="label-sm">Terms & Conditions (Scroll to bottom to unlock)</label>
-            <div id="terms-scroll-box" class="terms-box" onscroll="checkScrollPosition()">
-                <strong>1. Simulation Disclaimer:</strong> This application is a simulated cloud mining dashboard built for entertainment and educational purposes.<br><br>
-                <strong>2. Account Security:</strong> You are responsible for keeping your account credentials secure.<br><br>
-                <strong>3. Payouts & Upgrades:</strong> Payout thresholds and premium purchases operate under simulated transactional logic.<br><br>
-                <strong>4. Policy Acceptance:</strong> By checking the box below, you agree to abide by community guidelines.
-            </div>
-
-            <div class="terms-container">
-                <input type="checkbox" id="terms-checkbox" disabled>
-                <label id="terms-label" for="terms-checkbox" style="color: #71717a;">Please scroll down to accept terms</label>
-            </div>
+        <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="email-input" class="form-input" placeholder="name@example.com">
         </div>
 
-        <span id="forgot-password-link" class="forgot-link" onclick="openForgotModal()">Forgot Password?</span>
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="password-input" class="form-input" placeholder="••••••••">
+        </div>
 
-        <button id="auth-btn" class="btn-primary" onclick="handleAuthSubmit()">Sign In</button>
+        <!-- Optional Referral Code field (Visible only on Register) -->
+        <div class="form-group" id="refcode-group">
+            <label class="form-label">Referral Code (Optional)</label>
+            <input type="text" id="refcode-input" class="form-input" placeholder="e.g. ORENGO77">
+        </div>
 
-        <p id="auth-switch-text" class="switch-text" onclick="toggleAuthMode()">
-            Don't have an account? <span>Register</span>
-        </p>
-    </div>
+        <button id="submit-btn" class="btn-submit" onclick="handleAuthSubmit()">Register</button>
 
-    <!-- FORGOT PASSWORD MODAL -->
-    <div id="forgot-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h3 style="font-size: 16px; margin-bottom: 6px;">Reset Password</h3>
-            <span style="font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 12px;">Enter your registered Email to reset password.</span>
-
-            <label class="label-sm">Email Address</label>
-            <input type="email" id="reset-email" class="input-field" placeholder="user@example.com">
-
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button class="btn-primary" style="background-color: #27272a;" onclick="closeForgotModal()">Cancel</button>
-                <button class="btn-primary" onclick="processPasswordReset()">Reset Password</button>
-            </div>
+        <div class="toggle-text">
+            <span id="toggle-prompt">Already have an account?</span> 
+            <span id="toggle-action-btn" class="toggle-link" onclick="toggleAuthMode()">Sign In</span>
         </div>
     </div>
 
-    <!-- FIREBASE & APP LOGIC SCRIPT -->
+    <!-- FIREBASE & AUTH LOGIC -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD3aVY-UknaJhL2jLSBESF2vMH-hKUgdf8",
@@ -242,109 +163,106 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let isRegisterMode = false;
-
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                window.location.href = 'index.html';
-            }
-        });
+        let isRegisterMode = true;
 
         function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
-            document.getElementById('register-fields').style.display = isRegisterMode ? 'block' : 'none';
-            document.getElementById('terms-section').style.display = isRegisterMode ? 'block' : 'none';
-            document.getElementById('auth-title').innerText = isRegisterMode ? 'Create Account' : 'Welcome Back';
-            document.getElementById('auth-btn').innerText = isRegisterMode ? 'Register' : 'Sign In';
-            document.getElementById('forgot-password-link').style.display = isRegisterMode ? 'none' : 'block';
-            document.getElementById('auth-switch-text').innerHTML = isRegisterMode ? 
-                'Already have an account? <span>Sign In</span>' : 
-                "Don't have an account? <span>Register</span>";
-        }
+            const title = document.getElementById('form-title');
+            const subtitle = document.getElementById('form-subtitle');
+            const submitBtn = document.getElementById('submit-btn');
+            const togglePrompt = document.getElementById('toggle-prompt');
+            const toggleAction = document.getElementById('toggle-action-btn');
+            const usernameGroup = document.getElementById('username-group');
+            const refcodeGroup = document.getElementById('refcode-group');
 
-        function checkScrollPosition() {
-            const box = document.getElementById('terms-scroll-box');
-            const checkbox = document.getElementById('terms-checkbox');
-            const label = document.getElementById('terms-label');
-
-            if (box.scrollHeight - box.scrollTop <= box.clientHeight + 5) {
-                checkbox.disabled = false;
-                label.style.color = "#d4d4d8";
-                label.innerText = "I accept the Terms & Conditions";
+            if (isRegisterMode) {
+                title.innerText = "Create Account";
+                subtitle.innerText = "Sign up to start cloud mining";
+                submitBtn.innerText = "Register";
+                togglePrompt.innerText = "Already have an account?";
+                toggleAction.innerText = "Sign In";
+                usernameGroup.style.display = "block";
+                refcodeGroup.style.display = "block";
+            } else {
+                title.innerText = "Welcome Back";
+                subtitle.innerText = "Sign in to access your dashboard";
+                submitBtn.innerText = "Sign In";
+                togglePrompt.innerText = "Don't have an account?";
+                toggleAction.innerText = "Register";
+                usernameGroup.style.display = "none";
+                refcodeGroup.style.display = "none";
             }
         }
 
-        function openForgotModal() {
-            document.getElementById('forgot-modal').classList.add('open');
-        }
+        async function handleAuthSubmit() {
+            const email = document.getElementById('email-input').value.trim();
+            const password = document.getElementById('password-input').value.trim();
+            const username = document.getElementById('username-input').value.trim();
+            const inputRefCode = document.getElementById('refcode-input').value.trim().toUpperCase();
 
-        function closeForgotModal() {
-            document.getElementById('forgot-modal').classList.remove('open');
-        }
-
-        function processPasswordReset() {
-            const email = document.getElementById('reset-email').value.trim();
-            if (!email) {
-                alert("Please enter your email address.");
-                return;
-            }
-
-            auth.sendPasswordResetEmail(email)
-                .then(() => {
-                    alert("Password reset email sent! Check your inbox.");
-                    closeForgotModal();
-                })
-                .catch((error) => {
-                    alert("Error: " + error.message);
-                });
-        }
-
-        function handleAuthSubmit() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
-
-            if (!email || !password) {
+            if (!email || !password || (isRegisterMode && !username)) {
                 alert("Please fill in all required fields.");
                 return;
             }
 
             if (isRegisterMode) {
-                const username = document.getElementById('reg-user').value.trim();
-                const termsAccepted = document.getElementById('terms-checkbox').checked;
+                try {
+                    // 1. Create Firebase Auth User
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    const newRefCode = 'ORENGO' + Math.floor(1000 + Math.random() * 9000);
 
-                if (!username) {
-                    alert("Please enter a username.");
-                    return;
-                }
+                    const BTC_USD_RATE = 77061.0;
+                    let startingBalance = 0;
+                    let referredByVal = "";
 
-                if (!termsAccepted) {
-                    alert("You must scroll through and accept the Terms & Conditions.");
-                    return;
-                }
+                    // 2. Handle Referral Bonus if provided ($0.50 for new user)
+                    if (inputRefCode) {
+                        const querySnapshot = await db.collection("users").where("refCode", "==", inputRefCode).get();
+                        if (!querySnapshot.empty) {
+                            const referrerDoc = querySnapshot.docs[0];
+                            const referrerId = referrerDoc.id;
+                            const referrerData = referrerDoc.data();
 
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        const userId = userCredential.user.uid;
-                        return db.collection("users").doc(userId).set({
-                            email: email,
-                            username: username,
-                            balance: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    })
-                    .then(() => {
-                        alert("Registration successful!");
-                        window.location.href = 'index.html';
-                    })
-                    .catch((error) => {
-                        alert("Registration Error: " + error.message);
+                            // Prevent self-referral check
+                            if (referrerId !== user.uid) {
+                                const bonusBtc = 0.50 / BTC_USD_RATE;
+                                startingBalance += bonusBtc;
+                                referredByVal = inputRefCode;
+
+                                // Give referrer their $0.50 bonus too
+                                const referrerNewBalance = (referrerData.balance || 0) + bonusBtc;
+                                await db.collection("users").doc(referrerId).update({ balance: referrerNewBalance });
+                            }
+                        }
+                    }
+
+                    // 3. Create Firestore Document for New User starting at 0 balance (plus any referral bonus)
+                    await db.collection("users").doc(user.uid).set({
+                        username: username,
+                        email: email,
+                        balance: startingBalance,
+                        hashrate: 15.90,
+                        refCode: newRefCode,
+                        referredBy: referredByVal,
+                        lastSpinDate: "",
+                        lastBoost1Time: 0,
+                        lastBoost2Time: 0,
+                        miningEndTime: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
+                    alert("Registration successful!");
+                    window.location.href = "index.html";
+
+                } catch (error) {
+                    alert("Registration Error: " + error.message);
+                }
             } else {
+                // Sign In Flow
                 auth.signInWithEmailAndPassword(email, password)
                     .then(() => {
-                        alert("Login successful!");
-                        window.location.href = 'index.html';
+                        window.location.href = "index.html";
                     })
                     .catch((error) => {
                         alert("Login Error: " + error.message);

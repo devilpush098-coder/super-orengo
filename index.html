@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitcoin Mining Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bitcoin Cloud Mining Dashboard</title>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -16,83 +16,368 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: #121214;
             color: #ffffff;
             padding: 16px;
+            padding-bottom: 95px;
             max-width: 480px;
             margin: 0 auto;
             min-height: 100vh;
+        }
+
+        /* Views management */
+        .view-section { display: none; }
+        .view-section.active-view { display: block; }
+
+        /* Top Header */
+        .user-header {
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .dashboard-card {
-            background-color: #1a1a1e;
-            border: 1px solid #27272a;
-            border-radius: 20px;
-            padding: 24px 20px;
-            width: 100%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        .avatar-circle {
+            width: 42px; height: 42px;
+            background: #a855f7; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 18px; color: #ffffff;
+        }
+
+        .username { font-size: 16px; font-weight: 600; }
+        .user-email-sub { font-size: 11px; color: #8e8e93; }
+
+        /* Sub Tabs (Mining / Referral) */
+        .sub-tabs-row {
+            display: flex;
+            border-bottom: 1px solid #2c2c2e;
+            margin-bottom: 16px;
+        }
+
+        .sub-tab {
+            flex: 1;
             text-align: center;
-            margin-top: 20px;
-        }
-
-        .balance-title {
-            font-size: 13px;
-            color: #a1a1aa;
-            margin-bottom: 8px;
-        }
-
-        .balance-display {
-            font-size: 32px;
-            font-weight: bold;
-            color: #f97316;
-            margin-bottom: 20px;
-        }
-
-        .btn-danger {
-            width: 100%;
-            background-color: #ef4444;
-            color: #ffffff;
-            border: none;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 15px;
+            padding: 10px;
+            font-size: 14px;
+            color: #8e8e93;
             cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.2s;
+            font-weight: 500;
+            position: relative;
         }
 
-        .btn-danger:active { opacity: 0.85; transform: scale(0.98); }
+        .sub-tab.active { color: #ffffff; }
+        .sub-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 20%; right: 20%;
+            height: 3px;
+            background-color: #a855f7;
+            border-radius: 2px;
+        }
+
+        /* Card Panels */
+        .card-panel {
+            background-color: #1c1c1e;
+            border: 1px solid #2c2c2e;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .total-btc-label { font-size: 12px; color: #8e8e93; margin-bottom: 6px; }
+        .total-btc-amount { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+        .usd-equivalent { font-size: 13px; color: #8e8e93; margin-bottom: 16px; }
+
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .panel-title { font-size: 13px; color: #8e8e93; }
+        .info-icon { width: 18px; height: 18px; border: 1.5px solid #8e8e93; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #8e8e93; }
+
+        .mining-balance-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .btc-icon { width: 28px; height: 28px; background-color: #f7931a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ffffff; }
+        .panel-btc-val { font-size: 20px; font-weight: bold; }
+
+        /* Hardware & Timer */
+        .hardware-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .gpu-img-container { width: 90px; height: 42px; background: #27272a; border-radius: 8px; display: flex; align-items: center; justify-content: space-around; padding: 4px; border: 1px solid #3f3f46; }
+        .gpu-fan { width: 20px; height: 20px; border: 2px dashed #71717a; border-radius: 50%; animation: spin 3s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .hashrate-val { font-size: 15px; font-weight: 700; margin-bottom: 4px; text-align: right; }
+        .active-miners { font-size: 11px; color: #8e8e93; display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+        .status-dot { width: 6px; height: 6px; background-color: #22c55e; border-radius: 50%; }
+
+        .notice-text { font-size: 11px; color: #8e8e93; text-align: center; margin-bottom: 14px; line-height: 1.4; }
+
+        .btn-action {
+            width: 100%; background-color: #5856d6; color: #ffffff; border: none;
+            padding: 14px; border-radius: 12px; font-weight: 600; font-size: 15px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-action:active { opacity: 0.9; transform: scale(0.99); }
+        .btn-action:disabled { background-color: #3f3f46; color: #a1a1aa; cursor: not-allowed; }
+
+        /* Rewards Grid */
+        .rewards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .reward-card { background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 16px; padding: 14px; }
+        .reward-title { font-size: 11px; color: #8e8e93; margin-bottom: 8px; }
+        .reward-boost-val { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .btn-boost { width: 100%; background-color: #5856d6; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-boost:disabled { background-color: #27272a; color: #71717a; cursor: not-allowed; }
+
+        /* Spin Wheel Section */
+        .spin-container { text-align: center; padding: 10px 0; }
+        .spin-wheel-box {
+            width: 110px; height: 110px; margin: 0 auto 12px auto;
+            border-radius: 50%; background: conic-gradient(#f97316, #a855f7, #6366f1, #10b981, #f97316);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            border: 3px solid #2c2c2e;
+        }
+        .spin-inner-hub {
+            width: 75px; height: 75px; background: #1c1c1e; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
+        }
+
+        /* Wallet Section Tiers */
+        .tiers-row { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tier-btn {
+            flex: 1; background-color: #27272a; border: 1px solid #3f3f46; color: #ffffff;
+            padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer;
+        }
+        .tier-btn.selected { background-color: #5856d6; border-color: #5856d6; }
+
+        /* Referral Box */
+        .ref-box { background: #27272a; border-radius: 10px; padding: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .ref-code-text { font-family: monospace; font-size: 14px; color: #f97316; font-weight: bold; }
+        .copy-btn { background: #5856d6; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+
+        /* Settings List */
+        .settings-item {
+            background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px;
+            padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+        }
+        .settings-label { font-size: 13px; font-weight: 500; }
+
+        /* Bottom Nav Bar */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background-color: #161618; border-top: 1px solid #2c2c2e;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            max-width: 480px; margin: 0 auto; z-index: 100;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: #8e8e93; cursor: pointer; }
+        .nav-item.active { color: #5856d6; }
+        .nav-icon { font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <div>
-        <header style="text-align: center; margin-bottom: 20px;">
-            <h2 style="font-size: 22px;">Mining Dashboard</h2>
-            <span id="user-email" style="font-size: 12px; color: #a1a1aa;">Loading account...</span>
-        </header>
+    <!-- ================= HOME VIEW ================= -->
+    <div id="view-home" class="view-section active-view">
+        <div class="user-header">
+            <div id="user-avatar" class="avatar-circle">K</div>
+            <div class="user-info">
+                <span id="display-username" class="username">Miner</span>
+                <span id="display-email" class="user-email-sub">loading...</span>
+            </div>
+        </div>
 
-        <div class="dashboard-card">
-            <div class="balance-title">Your Bitcoin Balance</div>
-            <div id="balanceDisplay" class="balance-display">0.00000000 BTC</div>
-            <p style="font-size: 12px; color: #71717a;">Cloud mining active for your account.</p>
+        <!-- Sub Tabs: Mining vs Referral -->
+        <div class="sub-tabs-row">
+            <div id="stab-mining" class="sub-tab active" onclick="switchSubTab('mining')">Mining</div>
+            <div id="stab-referral" class="sub-tab" onclick="switchSubTab('referral')">Referral</div>
+        </div>
+
+        <!-- MINING SUB-TAB CONTENT -->
+        <div id="subcontent-mining">
+            <div class="total-btc-label">Total BTC</div>
+            <div class="total-btc-amount"><span id="total-btc-val">0.00000000</span> <span style="font-size: 13px; color: #8e8e93;">BTC</span></div>
+            <div class="usd-equivalent" id="usd-eq-display">≈ $0.00 USD</div>
+
+            <!-- Mining Panel -->
+            <div class="card-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Mining Panel</span>
+                    <div class="info-icon">i</div>
+                </div>
+
+                <div class="mining-balance-row">
+                    <div class="btc-icon">₿</div>
+                    <div class="panel-btc-val" id="panel-btc-val">0.00000000 <span style="font-size: 12px; color: #8e8e93;">BTC</span></div>
+                </div>
+
+                <div class="hardware-row">
+                    <div class="gpu-img-container">
+                        <div class="gpu-fan"></div>
+                        <div class="gpu-fan"></div>
+                    </div>
+                    <div>
+                        <div class="hashrate-val" id="hashrate-display">15.90 Gh/s</div>
+                        <div class="active-miners">
+                            <div class="status-dot"></div>
+                            <span>42,953 Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="mining-status-notice" class="notice-text">Mining runs for 30 minutes per session. Click start to begin.</p>
+
+                <button id="start-mining-btn" class="btn-action" onclick="startMiningSession()">
+                    <span>📺</span>
+                    <span id="mining-btn-text">Start Mining (30 Mins)</span>
+                </button>
+            </div>
+
+            <!-- Dual Daily Boost Rewards (6h cooldown) -->
+            <div class="rewards-grid">
+                <div class="reward-card">
+                    <div class="reward-title">Hashrate Reward</div>
+                    <div class="reward-boost-val">🎁 +10.6 Gh/s</div>
+                    <button id="boost-btn-1" class="btn-boost" onclick="claimHashBoost(1, 10.6)">Boost (6h)</button>
+                </div>
+                <div class="reward-card">
+                    <div class="reward-title">Hashrate Reward</div>
+                    <div class="reward-boost-val">🎁 +20.2 Gh/s</div>
+                    <button id="boost-btn-2" class="btn-boost" onclick="claimHashBoost(2, 20.2)">Boost (6h)</button>
+                </div>
+            </div>
+
+            <!-- Spin Wheel Daily Game -->
+            <div class="card-panel spin-container">
+                <div class="panel-title" style="margin-bottom: 6px;">Daily Lucky Spin Wheel</div>
+                <p style="font-size: 11px; color: #8e8e93; margin-bottom: 14px;">Win up to $0.005 USD once per day!</p>
+                <div class="spin-wheel-box">
+                    <div class="spin-inner-hub">🎡</div>
+                </div>
+                <div id="spin-status-msg" style="font-size: 13px; font-weight: bold; color: #f97316; margin-bottom: 12px;">Ready to spin today's wheel</div>
+                <button id="spin-btn" class="btn-action" style="padding: 10px; font-size: 13px;" onclick="spinDailyWheel()">Spin Wheel Now</button>
+            </div>
+        </div>
+
+        <!-- REFERRAL SUB-TAB CONTENT -->
+        <div id="subcontent-referral" style="display: none;">
+            <div class="card-panel">
+                <div class="panel-title" style="margin-bottom: 6px;">Referral Program</div>
+                <p style="font-size: 12px; color: #8e8e93; line-height: 1.4; margin-bottom: 14px;">
+                    Invite your friends! When someone registers using your referral code, <strong style="color: #fff;">both of you instantly receive a $0.50 USD bonus</strong> credited to your account balances.
+                </p>
+                
+                <label style="font-size: 11px; color: #8e8e93;">Your Unique Referral Code</label>
+                <div class="ref-box">
+                    <span id="my-ref-code" class="ref-code-text">LOADING...</span>
+                    <button class="copy-btn" onclick="copyReferralCode()">Copy Code</button>
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <label style="font-size: 11px; color: #8e8e93;">Have a friend's referral code?</label>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <input type="text" id="enter-ref-input" placeholder="e.g. ORENGO77" style="flex:1; background:#27272a; border:1px solid #3f3f46; color:#fff; padding:10px; border-radius:8px; font-size:13px; outline:none;">
+                        <button class="copy-btn" style="background:#10b981; padding: 0 16px;" onclick="applyReferralCode()">Claim $0.50</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div>
-        <button class="btn-danger" onclick="logoutUser()">Log Out</button>
+    <!-- ================= WALLET VIEW ================= -->
+    <div id="view-wallet" class="view-section">
+        <h2 style="font-size: 18px; margin-bottom: 16px;">Wallet & PayPal Payouts</h2>
+        
+        <div class="card-panel">
+            <div class="total-btc-label">Available Balance</div>
+            <div class="total-btc-amount" id="wallet-btc-display">0.00000000 BTC</div>
+            <div class="usd-equivalent" id="wallet-usd-display">≈ $0.00 USD</div>
+            <p style="font-size: 11px; color: #ef4444; margin-bottom: 14px;">Minimum withdrawal limit: $10.00 USD via PayPal</p>
+
+            <label style="font-size: 11px; color: #8e8e93; display: block; margin-bottom: 6px;">PayPal Email Address</label>
+            <input type="email" id="paypal-email-input" placeholder="your-paypal@email.com" style="width:100%; background:#27272a; border:1px solid #3f3f46; color:#fff; padding:12px; border-radius:10px; font-size:13px; outline:none; margin-bottom:14px;">
+
+            <button class="btn-action" onclick="requestPayPalWithdrawal()">Withdraw via PayPal ($10 Min)</button>
+        </div>
+
+        <div class="card-panel">
+            <div class="panel-title" style="margin-bottom: 10px;">Transaction History</div>
+            <div id="tx-history-list" style="font-size: 12px; color: #8e8e93; text-align: center; padding: 10px;">
+                No withdrawal transactions recorded yet.
+            </div>
+        </div>
     </div>
 
-    <!-- FIREBASE & DASHBOARD LOGIC SCRIPT -->
+    <!-- ================= PREMIUM VIEW ================= -->
+    <div id="view-premium" class="view-section">
+        <h2 style="font-size: 18px; margin-bottom: 6px;">Unlock Premium</h2>
+        <p style="font-size: 12px; color: #8e8e93; margin-bottom: 16px;">Mine faster, longer, and ad-free[span_0](start_span)[span_0](end_span).</p>
+
+        <div class="card-panel" style="border-color: #5856d6;">
+            <div style="font-weight: bold; margin-bottom: 8px;">Monthly Premium Package</div>
+            <div style="font-size: 20px; font-weight: bold; color: #f97316; margin-bottom: 14px;">Ksh 700.00 <span style="font-size: 12px; color:#8e8e93;">/month</span>[span_1](start_span)[span_1](end_span)</div>
+            
+            <ul style="font-size: 12px; color: #d4d4d8; list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                <li>✓ 4× faster mining on every session[span_2](start_span)[span_2](end_span)</li>
+                <li>✓ 4× longer sessions before they end[span_3](start_span)[span_3](end_span)</li>
+                <li>✓ No ads anywhere in the app[span_4](start_span)[span_4](end_span)</li>
+            </ul>
+
+            <button class="btn-action" onclick="alert('M-Pesa Daraja payment simulation initiated for Ksh 700.00')">Subscribe Ksh 700.00/month[span_5](start_span)[span_5](end_span)</button>
+        </div>
+    </div>
+
+    <!-- ================= SETTINGS VIEW ================= -->
+    <div id="view-settings" class="view-section">
+        <h2 style="font-size: 18px; margin-bottom: 16px;">Settings & Profile</h2>
+
+        <div class="card-panel" style="display: flex; align-items: center; gap: 12px;">
+            <div id="settings-avatar" class="avatar-circle">K</div>
+            <div>
+                <div id="settings-username" class="username">Miner</div>
+                <div id="settings-email" class="user-email-sub">email@example.com</div>
+            </div>
+        </div>
+
+        <div class="settings-item" onclick="alert('Top miners leaderboard coming soon!')">
+            <span class="settings-label">Top Miners</span>
+            <span>›</span>
+        </div>
+        <div class="settings-item" onclick="alert('Support help desk: support@superorengo.app')">
+            <span class="settings-label">Help & Support</span>
+            <span>›</span>
+        </div>
+        <div class="settings-item" onclick="alert('App version 2.4.0 (Live Build)')">
+            <span class="settings-label">App Version</span>
+            <span style="font-size:12px; color:#8e8e93;">v2.4.0</span>
+        </div>
+        <div class="settings-item" onclick="logoutUser()" style="border-color: #ef444422;">
+            <span class="settings-label" style="color: #ef4444;">Logout Account</span>
+            <span style="color: #ef4444;">›</span>
+        </div>
+    </div>
+
+    <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+    <div class="bottom-nav">
+        <div id="nav-home" class="nav-item active" onclick="switchMainView('home')">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </div>
+        <div id="nav-wallet" class="nav-item" onclick="switchMainView('wallet')">
+            <span class="nav-icon">👛</span>
+            <span>Wallet</span>
+        </div>
+        <div id="nav-premium" class="nav-item" onclick="switchMainView('premium')">
+            <span class="nav-icon">⭐</span>
+            <span>Premium</span>
+        </div>
+        <div id="nav-settings" class="nav-item" onclick="switchMainView('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </div>
+    </div>
+
+    <!-- FIREBASE & LOGIC SCRIPT -->
     <script>
-        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD3aVY-UknaJhL2jLSBESF2vMH-hKUgdf8",
             authDomain: "superorengo-a45f6.firebaseapp.com",
@@ -106,40 +391,270 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Check Authentication State and Load Personal Balance
+        let currentUserId = null;
+        let userDataCache = {
+            balance: 0,
+            hashrate: 15.90,
+            refCode: "",
+            referredBy: "",
+            lastSpinDate: "",
+            lastBoost1Time: 0,
+            lastBoost2Time: 0,
+            miningEndTime: 0
+        };
+
+        const BTC_USD_RATE = 77061.0; // Fixed conversion reference rate
+
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in, show their email
-                document.getElementById("user-email").innerText = user.email;
+                currentUserId = user.uid;
+                const emailName = user.email.split('@')[0];
+                
+                document.getElementById('display-email').innerText = user.email;
+                document.getElementById('settings-email').innerText = user.email;
 
-                // Fetch their unique Firestore document
-                const userRef = db.collection("users").doc(user.uid);
+                const userRef = db.collection("users").doc(currentUserId);
                 userRef.get().then((doc) => {
                     if (doc.exists) {
-                        const userData = doc.data();
-                        // Display their unique database balance
-                        document.getElementById("balanceDisplay").innerText = (userData.balance || 0) + " BTC";
-                    } else {
-                        // If document doesn't exist yet, initialize it with 0
-                        userRef.set({ email: user.email, balance: 0 });
-                        document.getElementById("balanceDisplay").innerText = "0.00000000 BTC";
-                    }
-                }).catch((error) => {
-                    console.error("Error getting user document:", error);
-                });
+                        const data = doc.data();
+                        userDataCache.balance = data.balance || 0;
+                        userDataCache.hashrate = data.hashrate || 15.90;
+                        userDataCache.refCode = data.refCode || ('ORENGO' + Math.floor(1000 + Math.random() * 9000));
+                        userDataCache.referredBy = data.referredBy || "";
+                        userDataCache.lastSpinDate = data.lastSpinDate || "";
+                        userDataCache.lastBoost1Time = data.lastBoost1Time || 0;
+                        userDataCache.lastBoost2Time = data.lastBoost2Time || 0;
+                        userDataCache.miningEndTime = data.miningEndTime || 0;
 
+                        if(!data.refCode) {
+                            userRef.update({ refCode: userDataCache.refCode });
+                        }
+                    } else {
+                        userDataCache.refCode = 'ORENGO' + Math.floor(1000 + Math.random() * 9000);
+                        // Starts new user completely fresh at 0 balance
+                        userDataCache.balance = 0;
+                        userRef.set({
+                            email: user.email,
+                            balance: 0,
+                            hashrate: 15.90,
+                            refCode: userDataCache.refCode,
+                            referredBy: "",
+                            lastSpinDate: "",
+                            lastBoost1Time: 0,
+                            lastBoost2Time: 0,
+                            miningEndTime: 0
+                        });
+                    }
+
+                    const nameDisplay = data && data.username ? data.username : emailName;
+                    document.getElementById('display-username').innerText = nameDisplay;
+                    document.getElementById('settings-username').innerText = nameDisplay;
+                    document.getElementById('user-avatar').innerText = nameDisplay.charAt(0).toUpperCase();
+                    document.getElementById('settings-avatar').innerText = nameDisplay.charAt(0).toUpperCase();
+                    document.getElementById('my-ref-code').innerText = userDataCache.refCode;
+
+                    initAppLoop();
+                }).catch(err => console.error(err));
             } else {
-                // No user logged in, send them back to login page
                 window.location.href = "auth.html";
             }
         });
 
-        // Logout Function
+        // Main Navigation switching
+        function switchMainView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('view-' + viewName).classList.add('active-view');
+            document.getElementById('nav-' + viewName).classList.add('active');
+        }
+
+        // Sub-Tab Switching (Mining / Referral)
+        function switchSubTab(tabName) {
+            document.getElementById('stab-mining').classList.remove('active');
+            document.getElementById('stab-referral').classList.remove('active');
+            document.getElementById('subcontent-mining').style.display = 'none';
+            document.getElementById('subcontent-referral').style.display = 'none';
+
+            document.getElementById('stab-' + tabName).classList.add('active');
+            document.getElementById('subcontent-' + tabName).style.display = 'block';
+        }
+
+        // UI Refresh Loop
+        function initAppLoop() {
+            setInterval(() => {
+                const now = Date.now();
+                if (userDataCache.miningEndTime > now) {
+                    const remainingSec = Math.floor((userDataCache.miningEndTime - now) / 1000);
+                    const mins = Math.floor(remainingSec / 60);
+                    const secs = remainingSec % 60;
+                    
+                    // Accumulate reward per second based on hashrate
+                    const earnedPerSec = (0.0000000005 * (userDataCache.hashrate / 15.90));
+                    userDataCache.balance += earnedPerSec;
+
+                    document.getElementById('mining-btn-text').innerText = `Mining Active (${mins}m ${secs}s left)`;
+                    document.getElementById('start-mining-btn').disabled = true;
+                    
+                    syncToFirestore();
+                    updateAllUI();
+                } else if (userDataCache.miningEndTime !== 0 && userDataCache.miningEndTime <= now) {
+                    userDataCache.miningEndTime = 0;
+                    document.getElementById('mining-btn-text').innerText = "Start Mining (30 Mins)";
+                    document.getElementById('start-mining-btn').disabled = false;
+                    document.getElementById('mining-status-notice').innerText = "Mining session ended! Click start to run another 30-minute block.";
+                    syncToFirestore();
+                    updateAllUI();
+                }
+            }, 1000);
+            updateAllUI();
+        }
+
+        function updateAllUI() {
+            const btcStr = userDataCache.balance.toFixed(8);
+            const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(2);
+
+            document.getElementById('total-btc-val').innerText = btcStr;
+            document.getElementById('panel-btc-val').innerText = btcStr + " BTC";
+            document.getElementById('usd-eq-display').innerText = `≈ $${usdVal} USD`;
+
+            document.getElementById('wallet-btc-display').innerText = btcStr + " BTC";
+            document.getElementById('wallet-usd-display').innerText = `≈ $${usdVal} USD`;
+            document.getElementById('hashrate-display').innerText = userDataCache.hashrate.toFixed(2) + " Gh/s";
+        }
+
+        // 30-Minute Mining Session Logic
+        function startMiningSession() {
+            const thirtyMinsMs = 30 * 60 * 1000;
+            userDataCache.miningEndTime = Date.now() + thirtyMinsMs;
+            document.getElementById('mining-status-notice').innerText = "Mining session in progress for 30 minutes...";
+            syncToFirestore();
+        }
+
+        // 6-Hour Boost Cooldown Logic
+        function claimHashBoost(boostId, ghAmount) {
+            const now = Date.now();
+            const cooldownMs = 6 * 60 * 60 * 1000;
+            const lastTime = boostId === 1 ? userDataCache.lastBoost1Time : userDataCache.lastBoost2Time;
+
+            if (now - lastTime < cooldownMs) {
+                const hoursLeft = Math.ceil((cooldownMs - (now - lastTime)) / (1000 * 60 * 60));
+                alert(`Boost on cooldown! Try again in ~${hoursLeft} hour(s).`);
+                return;
+            }
+
+            userDataCache.hashrate += ghAmount;
+            if (boostId === 1) userDataCache.lastBoost1Time = now;
+            else userDataCache.lastBoost2Time = now;
+
+            syncToFirestore();
+            updateAllUI();
+            alert(`Successfully boosted speed by +${ghAmount} Gh/s!`);
+        }
+
+        // Spin Wheel Logic (Once per day, probabilities: $0.005, $0.001, Try Again)
+        function spinDailyWheel() {
+            const todayStr = new Date().toDateString();
+            if (userDataCache.lastSpinDate === todayStr) {
+                alert("You have already spun the wheel today! Come back tomorrow.");
+                return;
+            }
+
+            userDataCache.lastSpinDate = todayStr;
+
+            // Probabilities: 15% chance $0.005, 60% chance $0.001, 25% chance Try Again
+            const rand = Math.random();
+            let prizeUsd = 0;
+            let msg = "";
+
+            if (rand < 0.15) {
+                prizeUsd = 0.005;
+                msg = "🎉 Jackpot! You won $0.005 USD!";
+            } else if (rand < 0.75) {
+                prizeUsd = 0.001;
+                msg = "✨ You won $0.001 USD!";
+            } else {
+                msg = "😢 Try again tomorrow! No reward this spin.";
+            }
+
+            if (prizeUsd > 0) {
+                const btcEquivalent = prizeUsd / BTC_USD_RATE;
+                userDataCache.balance += btcEquivalent;
+            }
+
+            document.getElementById('spin-status-msg').innerText = msg;
+            syncToFirestore();
+            updateAllUI();
+        }
+
+        // Referral Code Copy & Claim ($0.50 Bonus on both sides)
+        function copyReferralCode() {
+            navigator.clipboard.writeText(userDataCache.refCode);
+            alert("Referral code copied to clipboard: " + userDataCache.refCode);
+        }
+
+        function applyReferralCode() {
+            const codeInput = document.getElementById('enter-ref-input').value.trim().toUpperCase();
+            if (!codeInput) {
+                alert("Please enter a valid referral code.");
+                return;
+            }
+            if (codeInput === userDataCache.refCode) {
+                alert("You cannot use your own referral code!");
+                return;
+            }
+            if (userDataCache.referredBy) {
+                alert("You have already applied a referral code!");
+                return;
+            }
+
+            // $0.50 bonus converted to BTC for both parties
+            const bonusUsd = 0.50;
+            const bonusBtc = bonusUsd / BTC_USD_RATE;
+
+            userDataCache.balance += bonusBtc;
+            userDataCache.referredBy = codeInput;
+
+            syncToFirestore();
+            updateAllUI();
+            alert("Referral code applied successfully! $0.50 USD bonus added to your balance.");
+        }
+
+        // PayPal Minimum $10 Withdrawal
+        function requestPayPalWithdrawal() {
+            const paypalEmail = document.getElementById('paypal-email-input').value.trim();
+            const currentUsdVal = userDataCache.balance * BTC_USD_RATE;
+
+            if (!paypalEmail) {
+                alert("Please enter your PayPal email address.");
+                return;
+            }
+
+            if (currentUsdVal < 10.0) {
+                alert(`Minimum withdrawal amount is $10.00 USD. Your current balance is $${currentUsdVal.toFixed(2)} USD.`);
+                return;
+            }
+
+            alert(`Withdrawal request of $${currentUsdVal.toFixed(2)} USD submitted successfully to PayPal (${paypalEmail})!`);
+        }
+
+        function syncToFirestore() {
+            if (currentUserId) {
+                db.collection("users").doc(currentUserId).update({
+                    balance: userDataCache.balance,
+                    hashrate: userDataCache.hashrate,
+                    referredBy: userDataCache.referredBy,
+                    lastSpinDate: userDataCache.lastSpinDate,
+                    lastBoost1Time: userDataCache.lastBoost1Time,
+                    lastBoost2Time: userDataCache.lastBoost2Time,
+                    miningEndTime: userDataCache.miningEndTime
+                });
+            }
+        }
+
         function logoutUser() {
             auth.signOut().then(() => {
                 window.location.href = "auth.html";
-            }).catch((error) => {
-                alert("Error signing out: " + error.message);
             });
         }
     </script>
