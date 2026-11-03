@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+0<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -566,6 +566,11 @@
                     const elapsedMs = totalSessionMs - remainingMs;
                     const progressPercent = Math.min(100, (elapsedMs / totalSessionMs) * 100);
 
+                    // --- REAL-TIME INCREMENTAL MINING ACCRUAL ---
+                    // Increment balance every second relative to the hashrate speed
+                    const rewardPerSecond = 0.00000000010 * (userDataCache.hashrate / 15.90);
+                    userDataCache.balance += rewardPerSecond;
+
                     topBar.style.display = 'block';
                     topFill.style.width = progressPercent + '%';
                     fan1.classList.add('active');
@@ -579,16 +584,13 @@
                     btn.disabled = true;
                     document.getElementById('mining-status-notice').innerText = "Mining session in progress...";
 
+                    syncToFirestore(); // Periodically sync updated balance
                     updateAllUI();
                 } else {
-                    // Check if a session just ended
                     if (btn.disabled) {
-                        const sessionReward = 0.00000500 * (userDataCache.hashrate / 15.90) * 1800;
-                        userDataCache.balance += sessionReward;
                         userDataCache.miningEndTime = 0;
-                        
                         syncToFirestore();
-                        alert(`Mining session completed! Earned ${sessionReward.toFixed(8)} BTC.`);
+                        alert(`Mining session completed!`);
                     }
 
                     topBar.style.display = 'none';
@@ -605,7 +607,7 @@
         }
 
         function updateAllUI() {
-            const btcStr = userDataCache.balance.toFixed(8);
+            const btcStr = userDataCache.balance.toFixed(11);
             const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(4);
 
             document.getElementById('total-btc-val').innerText = btcStr;
