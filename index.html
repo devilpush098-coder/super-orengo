@@ -150,6 +150,65 @@
         .btn-boost { width: 100%; background-color: #5856d6; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
         .btn-boost:disabled { background-color: #27272a; color: #71717a; cursor: not-allowed; }
 
+        /* Custom Modal Overlay */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .custom-modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .custom-modal-box {
+            background-color: #1c1c1e;
+            border: 1px solid #2c2c2e;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 340px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .custom-modal-overlay.show .custom-modal-box {
+            transform: scale(1);
+        }
+        .custom-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+        .custom-modal-desc {
+            font-size: 13px;
+            color: #8e8e93;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .custom-modal-btn {
+            width: 100%;
+            background-color: #27272a;
+            color: #ffffff;
+            border: 1px solid #3f3f46;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .custom-modal-btn:active {
+            background-color: #3f3f46;
+        }
+
         /* FAQs Accordion */
         .faq-section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
         .faq-item { background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
@@ -206,6 +265,15 @@
     <!-- Top Progress Bar -->
     <div id="top-progress-bar" class="top-progress-container">
         <div id="top-progress-fill" class="top-progress-fill"></div>
+    </div>
+
+    <!-- Custom Modal Overlay matching user screenshot style -->
+    <div id="custom-modal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <div id="modal-title" class="custom-modal-title">You have already Boosted</div>
+            <div id="modal-desc" class="custom-modal-desc">You have used your today's free boost. Please come again after 24 hours. Thank you!</div>
+            <button class="custom-modal-btn" onclick="closeCustomModal()">Close</button>
+        </div>
     </div>
 
     <!-- ================= HOME VIEW ================= -->
@@ -384,7 +452,7 @@
                 <li>✓ No ads anywhere in the app</li>
             </ul>
 
-            <button class="btn-action" onclick="alert('M-Pesa Daraja payment simulation initiated for Ksh 200.00')">Subscribe Ksh 200.00/month</button>
+            <button class="btn-action" onclick="showCustomModal('Premium Subscription', 'M-Pesa Daraja payment simulation initiated for Ksh 200.00')">Subscribe Ksh 200.00/month</button>
         </div>
     </div>
 
@@ -467,6 +535,17 @@
         };
 
         const BTC_USD_RATE = 77061.0;
+
+        // Custom Modal helper
+        function showCustomModal(title, desc) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('custom-modal').classList.add('show');
+        }
+
+        function closeCustomModal() {
+            document.getElementById('custom-modal').classList.remove('show');
+        }
 
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -618,7 +697,7 @@
                     if (btn.disabled) {
                         userDataCache.miningEndTime = 0;
                         syncToFirestore();
-                        alert(`Mining session completed!`);
+                        showCustomModal("Mining Session", "Mining session completed!");
                     }
 
                     topBar.style.display = 'none';
@@ -665,8 +744,8 @@
                     btn.disabled = true;
                 } else if (now - lastClaim < cooldownMs) {
                     const hoursLeft = Math.ceil((cooldownMs - (now - lastClaim)) / (1000 * 60 * 60));
-                    btn.innerText = `Cooldown (${hoursLeft}h)`;
-                    btn.disabled = true;
+                    btn.innerText = `Wait ${hoursLeft}h`;
+                    btn.disabled = false; // Keep clickable to show the exact popup message matching screenshot
                 } else {
                     btn.innerText = "Boost (ad)";
                     btn.disabled = false;
@@ -688,10 +767,15 @@
             const now = Date.now();
             const cooldownMs = 24 * 60 * 60 * 1000; // 24 hours
             const lastClaim = boostId === 1 ? userDataCache.lastBoost1Claim : userDataCache.lastBoost2Claim;
+            const boostEnd = boostId === 1 ? userDataCache.boost1EndTime : userDataCache.boost2EndTime;
+
+            if (boostEnd > now) {
+                showCustomModal("Boost Active", "Your boost is currently active. Please wait until it finishes.");
+                return;
+            }
 
             if (now - lastClaim < cooldownMs) {
-                const hoursLeft = Math.ceil((cooldownMs - (now - lastClaim)) / (1000 * 60 * 60));
-                alert(`Boost on daily cooldown! Try again in ~${hoursLeft} hour(s).`);
+                showCustomModal("You have already Boosted", "You have used your today's free boost. Please come again after 24 hours. Thank you!");
                 return;
             }
 
@@ -709,14 +793,14 @@
 
             syncToFirestore();
             updateAllUI();
-            alert(`Activated +${ghAmount} Gh/s speed boost for 2 minutes!`);
+            showCustomModal("Boost Activated", `Activated +${ghAmount} Gh/s speed boost for 2 minutes!`);
         }
 
         function spinDailyWheel() {
             if (!isDataLoaded) return;
             const todayStr = new Date().toDateString();
             if (userDataCache.lastSpinDate === todayStr) {
-                alert("You have already spun the wheel today! Come back tomorrow.");
+                showCustomModal("Already Spun", "You have already spun the wheel today! Come back tomorrow.");
                 return;
             }
 
@@ -744,26 +828,27 @@
             document.getElementById('spin-status-msg').innerText = msg;
             syncToFirestore();
             updateAllUI();
+            showCustomModal("Spin Result", msg);
         }
 
         function copyReferralCode() {
             navigator.clipboard.writeText(userDataCache.refCode);
-            alert("Referral code copied to clipboard: " + userDataCache.refCode);
+            showCustomModal("Copied", "Referral code copied to clipboard: " + userDataCache.refCode);
         }
 
         function applyReferralCode() {
             if (!isDataLoaded) return;
             const codeInput = document.getElementById('enter-ref-input').value.trim().toUpperCase();
             if (!codeInput) {
-                alert("Please enter a valid referral code.");
+                showCustomModal("Error", "Please enter a valid referral code.");
                 return;
             }
             if (codeInput === userDataCache.refCode) {
-                alert("You cannot use your own referral code!");
+                showCustomModal("Error", "You cannot use your own referral code!");
                 return;
             }
             if (userDataCache.referredBy) {
-                alert("You have already applied a referral code!");
+                showCustomModal("Error", "You have already applied a referral code!");
                 return;
             }
 
@@ -775,7 +860,7 @@
 
             syncToFirestore();
             updateAllUI();
-            alert("Referral code applied successfully! $0.50 USD bonus added to your balance.");
+            showCustomModal("Success", "Referral code applied successfully! $0.50 USD bonus added to your balance.");
         }
 
         function requestPayPalWithdrawal() {
@@ -784,16 +869,16 @@
             const currentUsdVal = userDataCache.balance * BTC_USD_RATE;
 
             if (!paypalEmail) {
-                alert("Please enter your PayPal email address.");
+                showCustomModal("Error", "Please enter your PayPal email address.");
                 return;
             }
 
             if (currentUsdVal < 10.0) {
-                alert(`Minimum withdrawal amount is $10.00 USD. Your current balance is $${currentUsdVal.toFixed(2)} USD.`);
+                showCustomModal("Minimum Limit", `Minimum withdrawal amount is $10.00 USD. Your current balance is $${currentUsdVal.toFixed(2)} USD.`);
                 return;
             }
 
-            alert(`Withdrawal request of $${currentUsdVal.toFixed(2)} USD submitted successfully to PayPal (${paypalEmail})!`);
+            showCustomModal("Withdrawal Submitted", `Withdrawal request of $${currentUsdVal.toFixed(2)} USD submitted successfully to PayPal (${paypalEmail})!`);
         }
 
         function syncToFirestore() {
@@ -819,10 +904,10 @@
             if (confirm(`Send password reset email to ${currentUserEmail}?`)) {
                 auth.sendPasswordResetEmail(currentUserEmail)
                     .then(() => {
-                        alert("Password reset link sent to " + currentUserEmail);
+                        showCustomModal("Email Sent", "Password reset link sent to " + currentUserEmail);
                     })
                     .catch((err) => {
-                        alert("Error: " + err.message);
+                        showCustomModal("Error", err.message);
                     });
             }
         }
