@@ -185,16 +185,20 @@
         }
         .settings-label { font-size: 13px; font-weight: 500; }
 
-        /* Bottom Nav Bar */
+        /* Bottom Nav Bar - Fixed Overlap Styling */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background-color: #161618; border-top: 1px solid #2c2c2e;
-            display: flex; justify-content: space-around; padding: 10px 0;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 8px 0 10px 0;
             max-width: 480px; margin: 0 auto; z-index: 100;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: #8e8e93; cursor: pointer; }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            gap: 2px; font-size: 10px; color: #8e8e93; cursor: pointer; flex: 1;
+        }
         .nav-item.active { color: #5856d6; }
-        .nav-icon { font-size: 18px; }
+        .nav-icon { font-size: 18px; line-height: 1; }
     </style>
 </head>
 <body>
@@ -368,19 +372,19 @@
     <!-- ================= PREMIUM VIEW ================= -->
     <div id="view-premium" class="view-section">
         <h2 style="font-size: 18px; margin-bottom: 6px;">Unlock Premium</h2>
-        <p style="font-size: 12px; color: #8e8e93; margin-bottom: 16px;">Mine faster, longer, and ad-free[span_0](start_span)[span_0](end_span).</p>
+        <p style="font-size: 12px; color: #8e8e93; margin-bottom: 16px;">Mine faster, longer, and ad-free.</p>
 
         <div class="card-panel" style="border-color: #5856d6;">
             <div style="font-weight: bold; margin-bottom: 8px;">Monthly Premium Package</div>
-            <div style="font-size: 20px; font-weight: bold; color: #f97316; margin-bottom: 14px;">Ksh 700.00 <span style="font-size: 12px; color:#8e8e93;">/month</span>[span_1](start_span)[span_1](end_span)</div>
+            <div style="font-size: 20px; font-weight: bold; color: #f97316; margin-bottom: 14px;">Ksh 200.00 <span style="font-size: 12px; color:#8e8e93;">/month</span></div>
             
             <ul style="font-size: 12px; color: #d4d4d8; list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-                <li>✓ 4× faster mining on every session[span_2](start_span)[span_2](end_span)</li>
-                <li>✓ 4× longer sessions before they end[span_3](start_span)[span_3](end_span)</li>
-                <li>✓ No ads anywhere in the app[span_4](start_span)[span_4](end_span)</li>
+                <li>✓ 4× faster mining on every session</li>
+                <li>✓ 4× longer sessions before they end</li>
+                <li>✓ No ads anywhere in the app</li>
             </ul>
 
-            <button class="btn-action" onclick="alert('M-Pesa Daraja payment simulation initiated for Ksh 700.00')">Subscribe Ksh 700.00/month[span_5](start_span)[span_5](end_span)</button>
+            <button class="btn-action" onclick="alert('M-Pesa Daraja payment simulation initiated for Ksh 200.00')">Subscribe Ksh 200.00/month</button>
         </div>
     </div>
 
@@ -394,6 +398,11 @@
                 <div id="settings-username" class="username">Miner</div>
                 <div id="settings-email" class="user-email-sub">email@example.com</div>
             </div>
+        </div>
+
+        <div class="settings-item" onclick="triggerPasswordResetFromSettings()">
+            <span class="settings-label" style="color: #a855f7;">Reset / Change Password</span>
+            <span style="color: #a855f7;">›</span>
         </div>
 
         <div class="settings-item" onclick="logoutUser()" style="border-color: #ef444422;">
@@ -438,6 +447,7 @@
         const db = firebase.firestore();
 
         let currentUserId = null;
+        let currentUserEmail = null;
         let userDataCache = {
             balance: 0,
             hashrate: 15.90,
@@ -454,6 +464,7 @@
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUserId = user.uid;
+                currentUserEmail = user.email;
                 const emailName = user.email.split('@')[0];
                 
                 document.getElementById('display-email').innerText = user.email;
@@ -523,7 +534,6 @@
             element.classList.toggle('open');
         }
 
-        // Live App Loop & Countdown Button Format
         function initAppLoop() {
             setInterval(() => {
                 const now = Date.now();
@@ -549,7 +559,6 @@
                     const mins = String(Math.floor(remainingSec / 60)).padStart(2, '0');
                     const secs = String(remainingSec % 60).padStart(2, '0');
                     
-                    // Boosted live counter increment every second
                     const earnedPerSec = 0.00000500 * (userDataCache.hashrate / 15.90);
                     userDataCache.balance += earnedPerSec;
 
@@ -704,6 +713,19 @@
                     lastBoost2Time: userDataCache.lastBoost2Time,
                     miningEndTime: userDataCache.miningEndTime
                 });
+            }
+        }
+
+        function triggerPasswordResetFromSettings() {
+            if (!currentUserEmail) return;
+            if (confirm(`Send password reset email to ${currentUserEmail}?`)) {
+                auth.sendPasswordResetEmail(currentUserEmail)
+                    .then(() => {
+                        alert("Password reset link sent to " + currentUserEmail);
+                    })
+                    .catch((err) => {
+                        alert("Error: " + err.message);
+                    });
             }
         }
 
