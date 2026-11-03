@@ -308,7 +308,7 @@
                         lastBoost2Time: 0,
                         miningEndTime: 0,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    }, { merge: true });
 
                     alert("Registration successful!");
                     window.location.href = "index.html";

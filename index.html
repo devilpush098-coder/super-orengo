@@ -185,7 +185,7 @@
         }
         .settings-label { font-size: 13px; font-weight: 500; }
 
-        /* Bottom Nav Bar - Fixed Overlap Styling */
+        /* Bottom Nav Bar */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background-color: #161618; border-top: 1px solid #2c2c2e;
@@ -448,6 +448,9 @@
 
         let currentUserId = null;
         let currentUserEmail = null;
+        let isDataLoaded = false;
+        let loopIntervalId = null;
+
         let userDataCache = {
             balance: 0,
             hashrate: 15.90,
@@ -471,11 +474,12 @@
                 document.getElementById('settings-email').innerText = user.email;
 
                 const userRef = db.collection("users").doc(currentUserId);
+                
                 userRef.get().then((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
                         userDataCache.balance = typeof data.balance === 'number' ? data.balance : 0;
-                        userDataCache.hashrate = data.hashrate || 15.90;
+                        userDataCache.hashrate = typeof data.hashrate === 'number' ? data.hashrate : 15.90;
                         userDataCache.refCode = data.refCode || ('ORENGO' + Math.floor(1000 + Math.random() * 9000));
                         userDataCache.referredBy = data.referredBy || "";
                         userDataCache.lastSpinDate = data.lastSpinDate || "";
@@ -485,20 +489,28 @@
                     } else {
                         userDataCache.refCode = 'ORENGO' + Math.floor(1000 + Math.random() * 9000);
                         userDataCache.balance = 0;
+                        userDataCache.hashrate = 15.90;
+                        userDataCache.referredBy = "";
+                        userDataCache.lastSpinDate = "";
+                        userDataCache.lastBoost1Time = 0;
+                        userDataCache.lastBoost2Time = 0;
+                        userDataCache.miningEndTime = 0;
+
                         userRef.set({
                             email: user.email,
-                            balance: 0,
-                            hashrate: 15.90,
+                            balance: userDataCache.balance,
+                            hashrate: userDataCache.hashrate,
                             refCode: userDataCache.refCode,
-                            referredBy: "",
-                            lastSpinDate: "",
-                            lastBoost1Time: 0,
-                            lastBoost2Time: 0,
-                            miningEndTime: 0
-                        });
+                            referredBy: userDataCache.referredBy,
+                            lastSpinDate: userDataCache.lastSpinDate,
+                            lastBoost1Time: userDataCache.lastBoost1Time,
+                            lastBoost2Time: userDataCache.lastBoost2Time,
+                            miningEndTime: userDataCache.miningEndTime
+                        }, { merge: true });
                     }
 
-                    const nameDisplay = data && data.username ? data.username : emailName;
+                    isDataLoaded = true;
+                    const nameDisplay = (doc.exists && doc.data().username) ? doc.data().username : emailName;
                     document.getElementById('display-username').innerText = nameDisplay;
                     document.getElementById('settings-username').innerText = nameDisplay;
                     document.getElementById('user-avatar').innerText = nameDisplay.charAt(0).toUpperCase();
@@ -506,7 +518,7 @@
                     document.getElementById('my-ref-code').innerText = userDataCache.refCode;
 
                     initAppLoop();
-                }).catch(err => console.error(err));
+                }).catch(err => console.error("Error fetching user data:", err));
             } else {
                 window.location.href = "auth.html";
             }
@@ -535,7 +547,11 @@
         }
 
         function initAppLoop() {
-            setInterval(() => {
+            if (loopIntervalId) clearInterval(loopIntervalId);
+
+            loopIntervalId = setInterval(() => {
+                if (!isDataLoaded) return;
+
                 const now = Date.now();
                 const topBar = document.getElementById('top-progress-bar');
                 const topFill = document.getElementById('top-progress-fill');
@@ -558,22 +574,30 @@
                     const remainingSec = Math.floor(remainingMs / 1000);
                     const mins = String(Math.floor(remainingSec / 60)).padStart(2, '0');
                     const secs = String(remainingSec % 60).padStart(2, '0');
-                    
-                    const earnedPerSec = 0.00000500 * (userDataCache.hashrate / 15.90);
-                    userDataCache.balance += earnedPerSec;
 
                     btnText.innerText = `${mins}:${secs}`;
                     btn.disabled = true;
-                    
-                    syncToFirestore();
+                    document.getElementById('mining-status-notice').innerText = "Mining session in progress...";
+
                     updateAllUI();
                 } else {
+                    // Check if a session just ended
+                    if (btn.disabled) {
+                        const sessionReward = 0.00000500 * (userDataCache.hashrate / 15.90) * 1800;
+                        userDataCache.balance += sessionReward;
+                        userDataCache.miningEndTime = 0;
+                        
+                        syncToFirestore();
+                        alert(`Mining session completed! Earned ${sessionReward.toFixed(8)} BTC.`);
+                    }
+
                     topBar.style.display = 'none';
                     fan1.classList.remove('active');
                     fan2.classList.remove('active');
                     btnText.innerText = "Start Mining (ad)";
                     btn.disabled = false;
                     document.getElementById('mining-status-notice').innerText = "Mining will stop when the timer stops. You need to restart it manually to continue mining.";
+                    
                     updateAllUI();
                 }
             }, 1000);
@@ -594,6 +618,7 @@
         }
 
         function startMiningSession() {
+            if (!isDataLoaded) return;
             const thirtyMinsMs = 30 * 60 * 1000;
             userDataCache.miningEndTime = Date.now() + thirtyMinsMs;
             document.getElementById('mining-status-notice').innerText = "Mining session in progress for 30 minutes...";
@@ -602,6 +627,7 @@
         }
 
         function claimHashBoost(boostId, ghAmount) {
+            if (!isDataLoaded) return;
             const now = Date.now();
             const cooldownMs = 6 * 60 * 60 * 1000;
             const lastTime = boostId === 1 ? userDataCache.lastBoost1Time : userDataCache.lastBoost2Time;
@@ -622,6 +648,7 @@
         }
 
         function spinDailyWheel() {
+            if (!isDataLoaded) return;
             const todayStr = new Date().toDateString();
             if (userDataCache.lastSpinDate === todayStr) {
                 alert("You have already spun the wheel today! Come back tomorrow.");
@@ -660,6 +687,7 @@
         }
 
         function applyReferralCode() {
+            if (!isDataLoaded) return;
             const codeInput = document.getElementById('enter-ref-input').value.trim().toUpperCase();
             if (!codeInput) {
                 alert("Please enter a valid referral code.");
@@ -686,6 +714,7 @@
         }
 
         function requestPayPalWithdrawal() {
+            if (!isDataLoaded) return;
             const paypalEmail = document.getElementById('paypal-email-input').value.trim();
             const currentUsdVal = userDataCache.balance * BTC_USD_RATE;
 
@@ -703,7 +732,7 @@
         }
 
         function syncToFirestore() {
-            if (currentUserId) {
+            if (currentUserId && isDataLoaded) {
                 db.collection("users").doc(currentUserId).update({
                     balance: userDataCache.balance,
                     hashrate: userDataCache.hashrate,
@@ -712,7 +741,7 @@
                     lastBoost1Time: userDataCache.lastBoost1Time,
                     lastBoost2Time: userDataCache.lastBoost2Time,
                     miningEndTime: userDataCache.miningEndTime
-                });
+                }).catch(err => console.error("Firestore sync error:", err));
             }
         }
 
@@ -730,6 +759,7 @@
         }
 
         function logoutUser() {
+            if (loopIntervalId) clearInterval(loopIntervalId);
             auth.signOut().then(() => {
                 window.location.href = "auth.html";
             });
