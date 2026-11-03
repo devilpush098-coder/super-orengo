@@ -1,4 +1,4 @@
-0<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -263,15 +263,15 @@
                 </button>
             </div>
 
-            <!-- Dual Daily Boost Rewards (6h cooldown) -->
+            <!-- Dual Daily Boost Rewards (24h cooldown, active for 2 mins) -->
             <div class="rewards-grid">
                 <div class="reward-card">
-                    <div class="reward-title">Daily Reward</div>
+                    <div class="reward-title">Daily Boost (2m)</div>
                     <div class="reward-boost-val">🎁 10.6 Gh/s</div>
                     <button id="boost-btn-1" class="btn-boost" onclick="claimHashBoost(1, 10.6)">Boost (ad)</button>
                 </div>
                 <div class="reward-card">
-                    <div class="reward-title">Daily Reward</div>
+                    <div class="reward-title">Daily Boost (2m)</div>
                     <div class="reward-boost-val">🎁 20.2 Gh/s</div>
                     <button id="boost-btn-2" class="btn-boost" onclick="claimHashBoost(2, 20.2)">Boost (ad)</button>
                 </div>
@@ -453,12 +453,16 @@
 
         let userDataCache = {
             balance: 0,
-            hashrate: 15.90,
+            baseHashrate: 15.90, // Permanent base speed
+            boost1EndTime: 0,    // Expiration timestamp for Boost 1 (2 min duration)
+            boost2EndTime: 0,    // Expiration timestamp for Boost 2 (2 min duration)
+            boost1Amount: 0,
+            boost2Amount: 0,
             refCode: "",
             referredBy: "",
             lastSpinDate: "",
-            lastBoost1Time: 0,
-            lastBoost2Time: 0,
+            lastBoost1Claim: 0,  // Last claim timestamp for 24h daily cooldown
+            lastBoost2Claim: 0,  // Last claim timestamp for 24h daily cooldown
             miningEndTime: 0
         };
 
@@ -479,32 +483,42 @@
                     if (doc.exists) {
                         const data = doc.data();
                         userDataCache.balance = typeof data.balance === 'number' ? data.balance : 0;
-                        userDataCache.hashrate = typeof data.hashrate === 'number' ? data.hashrate : 15.90;
+                        userDataCache.baseHashrate = typeof data.baseHashrate === 'number' ? (typeof data.hashrate === 'number' ? data.hashrate : 15.90) : 15.90;
+                        userDataCache.boost1EndTime = data.boost1EndTime || 0;
+                        userDataCache.boost2EndTime = data.boost2EndTime || 0;
+                        userDataCache.boost1Amount = data.boost1Amount || 0;
+                        userDataCache.boost2Amount = data.boost2Amount || 0;
+                        userDataCache.lastBoost1Claim = data.lastBoost1Claim || 0;
+                        userDataCache.lastBoost2Claim = data.lastBoost2Claim || 0;
                         userDataCache.refCode = data.refCode || ('ORENGO' + Math.floor(1000 + Math.random() * 9000));
                         userDataCache.referredBy = data.referredBy || "";
                         userDataCache.lastSpinDate = data.lastSpinDate || "";
-                        userDataCache.lastBoost1Time = data.lastBoost1Time || 0;
-                        userDataCache.lastBoost2Time = data.lastBoost2Time || 0;
                         userDataCache.miningEndTime = data.miningEndTime || 0;
                     } else {
                         userDataCache.refCode = 'ORENGO' + Math.floor(1000 + Math.random() * 9000);
                         userDataCache.balance = 0;
-                        userDataCache.hashrate = 15.90;
+                        userDataCache.baseHashrate = 15.90;
+                        userDataCache.boost1EndTime = 0;
+                        userDataCache.boost2EndTime = 0;
+                        userDataCache.boost1Amount = 0;
+                        userDataCache.boost2Amount = 0;
+                        userDataCache.lastBoost1Claim = 0;
+                        userDataCache.lastBoost2Claim = 0;
                         userDataCache.referredBy = "";
                         userDataCache.lastSpinDate = "";
-                        userDataCache.lastBoost1Time = 0;
-                        userDataCache.lastBoost2Time = 0;
                         userDataCache.miningEndTime = 0;
 
                         userRef.set({
                             email: user.email,
                             balance: userDataCache.balance,
-                            hashrate: userDataCache.hashrate,
+                            baseHashrate: userDataCache.baseHashrate,
                             refCode: userDataCache.refCode,
                             referredBy: userDataCache.referredBy,
                             lastSpinDate: userDataCache.lastSpinDate,
-                            lastBoost1Time: userDataCache.lastBoost1Time,
-                            lastBoost2Time: userDataCache.lastBoost2Time,
+                            lastBoost1Claim: userDataCache.lastBoost1Claim,
+                            lastBoost2Claim: userDataCache.lastBoost2Claim,
+                            boost1EndTime: userDataCache.boost1EndTime,
+                            boost2EndTime: userDataCache.boost2EndTime,
                             miningEndTime: userDataCache.miningEndTime
                         }, { merge: true });
                     }
@@ -546,6 +560,19 @@
             element.classList.toggle('open');
         }
 
+        // Calculates current effective hashrate dynamically (adds active 2-minute boosts)
+        function getCurrentHashrate() {
+            const now = Date.now();
+            let total = userDataCache.baseHashrate;
+            if (userDataCache.boost1EndTime > now) {
+                total += userDataCache.boost1Amount;
+            }
+            if (userDataCache.boost2EndTime > now) {
+                total += userDataCache.boost2Amount;
+            }
+            return total;
+        }
+
         function initAppLoop() {
             if (loopIntervalId) clearInterval(loopIntervalId);
 
@@ -560,6 +587,8 @@
                 const btn = document.getElementById('start-mining-btn');
                 const btnText = document.getElementById('mining-btn-text');
 
+                const effectiveHashrate = getCurrentHashrate();
+
                 if (userDataCache.miningEndTime > now) {
                     const totalSessionMs = 30 * 60 * 1000;
                     const remainingMs = userDataCache.miningEndTime - now;
@@ -567,8 +596,7 @@
                     const progressPercent = Math.min(100, (elapsedMs / totalSessionMs) * 100);
 
                     // --- REAL-TIME INCREMENTAL MINING ACCRUAL ---
-                    // Increment balance every second relative to the hashrate speed
-                    const rewardPerSecond = 0.00000000010 * (userDataCache.hashrate / 15.90);
+                    const rewardPerSecond = 0.00000000010 * (effectiveHashrate / 15.90);
                     userDataCache.balance += rewardPerSecond;
 
                     topBar.style.display = 'block';
@@ -584,7 +612,7 @@
                     btn.disabled = true;
                     document.getElementById('mining-status-notice').innerText = "Mining session in progress...";
 
-                    syncToFirestore(); // Periodically sync updated balance
+                    syncToFirestore(); 
                     updateAllUI();
                 } else {
                     if (btn.disabled) {
@@ -609,6 +637,7 @@
         function updateAllUI() {
             const btcStr = userDataCache.balance.toFixed(11);
             const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(4);
+            const effectiveHashrate = getCurrentHashrate();
 
             document.getElementById('total-btc-val').innerText = btcStr;
             document.getElementById('panel-btc-val').innerText = btcStr + " BTC";
@@ -616,7 +645,33 @@
 
             document.getElementById('wallet-btc-display').innerText = btcStr + " BTC";
             document.getElementById('wallet-usd-display').innerText = `≈ $${usdVal} USD`;
-            document.getElementById('hashrate-display').innerText = userDataCache.hashrate.toFixed(2) + " Gh/s";
+            document.getElementById('hashrate-display').innerText = effectiveHashrate.toFixed(2) + " Gh/s";
+
+            updateBoostButtonsUI();
+        }
+
+        function updateBoostButtonsUI() {
+            const now = Date.now();
+            const cooldownMs = 24 * 60 * 60 * 1000; // 24 Hours daily cooldown
+
+            [1, 2].forEach(id => {
+                const btn = document.getElementById(`boost-btn-${id}`);
+                const lastClaim = id === 1 ? userDataCache.lastBoost1Claim : userDataCache.lastBoost2Claim;
+                const boostEnd = id === 1 ? userDataCache.boost1EndTime : userDataCache.boost2EndTime;
+
+                if (boostEnd > now) {
+                    const secsLeft = Math.ceil((boostEnd - now) / 1000);
+                    btn.innerText = `Active (${secsLeft}s)`;
+                    btn.disabled = true;
+                } else if (now - lastClaim < cooldownMs) {
+                    const hoursLeft = Math.ceil((cooldownMs - (now - lastClaim)) / (1000 * 60 * 60));
+                    btn.innerText = `Cooldown (${hoursLeft}h)`;
+                    btn.disabled = true;
+                } else {
+                    btn.innerText = "Boost (ad)";
+                    btn.disabled = false;
+                }
+            });
         }
 
         function startMiningSession() {
@@ -631,22 +686,30 @@
         function claimHashBoost(boostId, ghAmount) {
             if (!isDataLoaded) return;
             const now = Date.now();
-            const cooldownMs = 6 * 60 * 60 * 1000;
-            const lastTime = boostId === 1 ? userDataCache.lastBoost1Time : userDataCache.lastBoost2Time;
+            const cooldownMs = 24 * 60 * 60 * 1000; // 24 hours
+            const lastClaim = boostId === 1 ? userDataCache.lastBoost1Claim : userDataCache.lastBoost2Claim;
 
-            if (now - lastTime < cooldownMs) {
-                const hoursLeft = Math.ceil((cooldownMs - (now - lastTime)) / (1000 * 60 * 60));
-                alert(`Boost on cooldown! Try again in ~${hoursLeft} hour(s).`);
+            if (now - lastClaim < cooldownMs) {
+                const hoursLeft = Math.ceil((cooldownMs - (now - lastClaim)) / (1000 * 60 * 60));
+                alert(`Boost on daily cooldown! Try again in ~${hoursLeft} hour(s).`);
                 return;
             }
 
-            userDataCache.hashrate += ghAmount;
-            if (boostId === 1) userDataCache.lastBoost1Time = now;
-            else userDataCache.lastBoost2Time = now;
+            const twoMinutesMs = 2 * 60 * 1000; // exactly 2 minutes duration
+
+            if (boostId === 1) {
+                userDataCache.boost1Amount = ghAmount;
+                userDataCache.boost1EndTime = now + twoMinutesMs;
+                userDataCache.lastBoost1Claim = now;
+            } else {
+                userDataCache.boost2Amount = ghAmount;
+                userDataCache.boost2EndTime = now + twoMinutesMs;
+                userDataCache.lastBoost2Claim = now;
+            }
 
             syncToFirestore();
             updateAllUI();
-            alert(`Successfully boosted speed by +${ghAmount} Gh/s!`);
+            alert(`Activated +${ghAmount} Gh/s speed boost for 2 minutes!`);
         }
 
         function spinDailyWheel() {
@@ -737,11 +800,15 @@
             if (currentUserId && isDataLoaded) {
                 db.collection("users").doc(currentUserId).update({
                     balance: userDataCache.balance,
-                    hashrate: userDataCache.hashrate,
+                    baseHashrate: userDataCache.baseHashrate,
+                    boost1EndTime: userDataCache.boost1EndTime,
+                    boost2EndTime: userDataCache.boost2EndTime,
+                    boost1Amount: userDataCache.boost1Amount,
+                    boost2Amount: userDataCache.boost2Amount,
+                    lastBoost1Claim: userDataCache.lastBoost1Claim,
+                    lastBoost2Claim: userDataCache.lastBoost2Claim,
                     referredBy: userDataCache.referredBy,
                     lastSpinDate: userDataCache.lastSpinDate,
-                    lastBoost1Time: userDataCache.lastBoost1Time,
-                    lastBoost2Time: userDataCache.lastBoost2Time,
                     miningEndTime: userDataCache.miningEndTime
                 }).catch(err => console.error("Firestore sync error:", err));
             }
