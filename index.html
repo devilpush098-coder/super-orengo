@@ -126,7 +126,7 @@
 
         /* Hardware & Timer */
         .hardware-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .gpu-img-container { width: 90px; height: 42px; background: #27272a; border-radius: 8px; display: flex; align-items: center; justify-space-around; padding: 4px; border: 1px solid #3f3f46; }
+        .gpu-img-container { width: 90px; height: 42px; background: #27272a; border-radius: 8px; display: flex; align-items: center; justify-content: space-around; padding: 4px; border: 1px solid #3f3f46; }
         .gpu-fan { width: 20px; height: 20px; border: 2px dashed #71717a; border-radius: 50%; }
         .gpu-fan.active { animation: spin 1s linear infinite; border-color: #5856d6; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -329,7 +329,7 @@
                         <div class="hashrate-val" id="hashrate-display">15.90 Gh/s</div>
                         <div class="active-miners">
                             <div class="status-dot"></div>
-                            <span>42,953 Active</span>
+                            <span id="active-miners-text">42,953 Active</span>
                         </div>
                     </div>
                 </div>
@@ -749,7 +749,18 @@
         function updateAllUI() {
             const btcStr = userDataCache.balance.toFixed(11);
             const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(4);
-            const effectiveHashrate = getCurrentHashrate();
+            const baseEffective = getCurrentHashrate();
+
+            // Real-time visual hash fluctuation (±0.45 Gh/s) when mining is active
+            let displayHash = baseEffective;
+            if (userDataCache.miningEndTime > Date.now()) {
+                const fluctuation = (Math.random() * 0.90) - 0.45;
+                displayHash = Math.max(0, baseEffective + fluctuation);
+            }
+
+            // Real-time active miners fluctuation between 35,000 and 45,000
+            const randomMiners = Math.floor(Math.random() * (45000 - 35000 + 1)) + 35000;
+            const activeMiners = randomMiners.toLocaleString();
 
             document.getElementById('total-btc-val').innerText = btcStr;
             document.getElementById('panel-btc-val').innerText = btcStr + " BTC";
@@ -757,7 +768,8 @@
 
             document.getElementById('wallet-btc-display').innerText = btcStr + " BTC";
             document.getElementById('wallet-usd-display').innerText = `≈ $${usdVal} USD`;
-            document.getElementById('hashrate-display').innerText = effectiveHashrate.toFixed(2) + " Gh/s";
+            document.getElementById('hashrate-display').innerText = displayHash.toFixed(2) + " Gh/s";
+            document.getElementById('active-miners-text').innerText = activeMiners + " Active";
 
             updateBoostButtonsUI();
         }
