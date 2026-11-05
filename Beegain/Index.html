@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BeeGain</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f1f5f9; display: flex; justify-content: center; color: #1e293b; }
+    
+    .app-container { width: 100%; max-width: 420px; background-color: #f8fafc; min-height: 100vh; position: relative; padding-bottom: 70px; }
+    
+    /* Registration Modal Overlay */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal-card { background: white; border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-icon { width: 56px; height: 56px; background: #ffc107; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+    .modal-title { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .modal-subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; }
+    .form-group { text-align: left; margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase; }
+    .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; outline: none; }
+    .btn-submit { width: 100%; padding: 12px; background: #ffc107; border: none; border-radius: 12px; font-weight: 700; color: #0f172a; font-size: 14px; cursor: pointer; margin-top: 10px; }
+
+    /* Top Header */
+    .header { background: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+    .status-badge { display: flex; align-items: center; gap: 8px; }
+    .dot-pulse { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+    .status-text h4 { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .status-text p { font-size: 10px; color: #64748b; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .bee-pot { width: 32px; height: 32px; background: #fffbebfb; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* Card Component */
+    .card { background: white; border-radius: 18px; padding: 18px; margin: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    
+    /* Balance & Honeycomb */
+    .balance-title { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+    .balance-val { font-size: 32px; font-weight: 900; color: #0f172a; text-align: center; margin: 4px 0 2px; }
+    .balance-unit { font-size: 12px; background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 20px; font-weight: 700; margin-left: 6px; }
+    .balance-usd { font-size: 13px; color: #10b981; font-weight: 700; text-align: center; }
+
+    /* Pure CSS Honeycomb Visualizer */
+    .honeycomb-container { margin: 20px auto; text-align: center; }
+    .hc-row { display: flex; justify-content: center; margin-bottom: -6px; }
+    .hc-hex { width: 22px; height: 25px; background: #fde68a; margin: 1px; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); transition: background 0.4s; }
+    .hc-hex.active { background: #f59e0b; }
+    .gathering-lbl { font-size: 11px; color: #d97706; font-weight: 600; margin-top: 10px; }
+
+    /* Payout Progress */
+    .payout-meta { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 6px; }
+    .progress-bg { background: #e2e8f0; border-radius: 10px; height: 10px; width: 100%; overflow: hidden; }
+    .progress-fill { background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; }
+
+    /* Stats List */
+    .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+    .stat-lbl { color: #64748b; }
+    .stat-val { font-weight: 700; color: #1e293b; }
+
+    /* Devices Card */
+    .device-item { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 12px; margin-top: 8px; }
+    .device-info { display: flex; align-items: center; gap: 10px; }
+    .device-icon { width: 32px; height: 32px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+    /* Profile Section */
+    .profile-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .avatar { width: 44px; height: 44px; background: #ffc107; border-radius: 50%; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; color: #0f172a; }
+    .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600; color: #334155; }
+
+    /* Bottom Navigation */
+    .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: white; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; }
+    .nav-btn { background: none; border: none; display: flex; flex-col; align-items: center; gap: 4px; color: #94a3b8; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .nav-btn.active { color: #ffc107; }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Registration Screen -->
+    <div id="authModal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#0f172a"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z"/></svg>
+        </div>
+        <h2 class="modal-title">Join BeeGain</h2>
+        <p class="modal-subtitle">Register your account to start gathering CR automatically.</p>
+        
+        <form onsubmit="registerUser(event)">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="regName" required placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="regEmail" required placeholder="user@example.com">
+          </div>
+          <button type="submit" class="btn-submit">Start Earning (0 CR)</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Header Bar -->
+    <header class="header">
+      <div class="status-badge">
+        <div class="dot-pulse"></div>
+        <div class="status-text">
+          <h4>Connected</h4>
+          <p id="deviceName">Android Device • Active</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="bee-pot">🍯</div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="viewHome">
+      
+      <!-- Balance Card -->
+      <div class="card">
+        <div class="balance-title">Current Balance</div>
+        <div class="balance-val">
+          <span id="crVal">0.00</span><span class="balance-unit">CR</span>
+        </div>
+        <div class="balance-usd">≈ $<span id="usdVal">0.00</span> USD</div>
+
+        <!-- Honeycomb Graphic -->
+        <div class="honeycomb-container">
+          <div class="hc-row"><div class="hc-hex"></div><div class="hc-hex"></div><div class="hc-hex"></div></div>
+          <div class="hc-row"><div class="hc-hex"></div><div class="hc-hex"></div><div class="hc-hex"></div><div class="hc-hex"></div></div>
+          <div class="hc-row"><div class="hc-hex"></div><div class="hc-hex"></div><div class="hc-hex"></div></div>
+          <div class="gathering-lbl">🐝 Gathering credits background...</div>
+        </div>
+
+        <!-- Payout Progress -->
+        <div class="payout-meta">
+          <span>Collect $20.00 to request payout</span>
+          <span id="payoutPct">0.00%</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- Live Earnings Card -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="font-size: 13px; font-weight: 800;">Earned Today</h3>
+          <span id="todayTotal" style="font-size: 13px; font-weight: 800; color: #d97706;">0.00 CR</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Gathering (Background Traffic)</span>
+          <span class="stat-val" id="todayGathered">0.00 CR</span>
+        </div>
+        <div class="stat-row" style="border: none;">
+          <span class="stat-lbl">Referral Earnings</span>
+          <span class="stat-val">0.00 CR</span>
+        </div>
+      </div>
+
+      <!-- Active Devices Card -->
+      <div class="card">
+        <h3 style="font-size: 13px; font-weight: 800; margin-bottom: 8px;">Active Devices</h3>
+        <div class="device-item">
+          <div class="device-info">
+            <div class="device-icon">📱</div>
+            <div>
+              <div style="font-size: 12px; font-weight: 700;" id="userDeviceLbl">Mobile Device</div>
+              <div style="font-size: 10px; color: #10b981; font-weight: 600;">● Active</div>
+            </div>
+          </div>
+          <div style="font-size: 12px; font-weight: 700;" id="deviceCR">0.00 CR</div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Profile View -->
+    <main id="viewMore" class="hidden">
+      <div class="card">
+        <div class="profile-header">
+          <div class="avatar" id="avatarInitial">U</div>
+          <div>
+            <h3 style="font-size: 15px; font-weight: 800;" id="profileName">User Name</h3>
+            <p style="font-size: 11px; color: #64748b;" id="profileEmail">user@example.com</p>
+          </div>
+        </div>
+        <button onclick="logout()" style="width: 100%; padding: 10px; background: #f1f5f9; border: none; border-radius: 10px; font-weight: 700; color: #475569; font-size: 12px; cursor: pointer;">Log Out</button>
+      </div>
+
+      <div class="card">
+        <div class="menu-item"><span>Transaction History</span><span>›</span></div>
+        <div class="menu-item"><span>Payout Settings</span><span>›</span></div>
+        <div class="menu-item" style="border: none;"><span>Help & FAQ</span><span>›</span></div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="nav-bar">
+      <button class="nav-btn active" id="btnHome" onclick="showTab('home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" id="btnMore" onclick="showTab('more')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg>
+        <span>More</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script>
+    let state = { cr: 0.00, today: 0.00 };
+    const RATE = 0.001;
+
+    function registerUser(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      if (!name || !email) return;
+
+      document.getElementById('profileName').textContent = name;
+      document.getElementById('profileEmail').textContent = email;
+      document.getElementById('avatarInitial').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('authModal').classList.add('hidden');
+
+      // Start simulated background credit collection
+      setInterval(() => {
+        const added = +(Math.random() * 0.3 + 0.1).toFixed(2);
+        state.cr += added;
+        state.today += added;
+        updateUI();
+        animateGrid();
+      }, 2000);
+    }
+
+    function updateUI() {
+      const usd = (state.cr * RATE).toFixed(2);
+      document.getElementById('crVal').textContent = state.cr.toFixed(2);
+      document.getElementById('usdVal').textContent = usd;
+      document.getElementById('todayTotal').textContent = state.today.toFixed(2) + ' CR';
+      document.getElementById('todayGathered').textContent = state.today.toFixed(2) + ' CR';
+      document.getElementById('deviceCR').textContent = state.today.toFixed(2) + ' CR';
+
+      const pct = Math.min((usd / 20.00) * 100, 100).toFixed(2);
+      document.getElementById('payoutPct').textContent = pct + '%';
+      document.getElementById('progressFill').style.width = pct + '%';
+    }
+
+    function animateGrid() {
+      const hexes = document.querySelectorAll('.hc-hex');
+      const idx = Math.floor(Math.random() * hexes.length);
+      hexes.forEach(h => h.classList.remove('active'));
+      if(hexes[idx]) hexes[idx].classList.add('active');
+    }
+
+    function showTab(tab) {
+      if (tab === 'home') {
+        document.getElementById('viewHome').classList.remove('hidden');
+        document.getElementById('viewMore').classList.add('hidden');
+        document.getElementById('btnHome').classList.add('active');
+        document.getElementById('btnMore').classList.remove('active');
+      } else {
+        document.getElementById('viewHome').classList.add('hidden');
+        document.getElementById('viewMore').classList.remove('hidden');
+        document.getElementById('btnHome').classList.remove('active');
+        document.getElementById('btnMore').classList.add('active');
+      }
+    }
+
+    function logout() {
+      document.getElementById('authModal').classList.remove('hidden');
+      state.cr = 0.00;
+      state.today = 0.00;
+      updateUI();
+    }
+  </script>
+</body>
+</html>
