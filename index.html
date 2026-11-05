@@ -336,9 +336,9 @@
                     </div>
                 </div>
 
-                <p id="mining-status-notice" class="notice-text">Mining will stop when the timer stops. You need to restart it manually to continue mining.</p>
+                <p id="mining-status-notice" class="notice-text">Watch a 2-minute ad to unlock and start your mining session.</p>
 
-                <button id="start-mining-btn" class="btn-action" onclick="startMiningSession()">
+                <button id="start-mining-btn" class="btn-action" onclick="triggerAdBeforeMining()">
                     <span id="mining-btn-text">Start Mining (ad)</span>
                 </button>
             </div>
@@ -509,6 +509,8 @@
         let isDataLoaded = false;
         let loopIntervalId = null;
         let paypalRendered = false;
+        let adWatched = false;
+        let countdownTimer = null;
 
         let userDataCache = {
             balance: 0,
@@ -523,7 +525,8 @@
             lastBoost1Claim: 0,
             lastBoost2Claim: 0,
             miningEndTime: 0,
-            isPremium: false
+            isPremium: false,
+            lastAdWatchedTimestamp: null
         };
 
         const BTC_USD_RATE = 77061.0;
@@ -729,18 +732,20 @@
                     syncToFirestore(); 
                     updateAllUI();
                 } else {
-                    if (btn.disabled) {
+                    if (btn.disabled && !btnText.innerText.includes("Watch")) {
                         userDataCache.miningEndTime = 0;
                         syncToFirestore();
                         showCustomModal("Mining Session", "Mining session completed!");
                     }
 
-                    topBar.style.display = 'none';
-                    fan1.classList.remove('active');
-                    fan2.classList.remove('active');
-                    btnText.innerText = "Start Mining (ad)";
-                    btn.disabled = false;
-                    document.getElementById('mining-status-notice').innerText = "Mining will stop when the timer stops. You need to restart it manually to continue mining.";
+                    if (!btnText.innerText.includes("Watch") && !btnText.innerText.includes("Wait")) {
+                        topBar.style.display = 'none';
+                        fan1.classList.remove('active');
+                        fan2.classList.remove('active');
+                        btnText.innerText = "Start Mining (ad)";
+                        btn.disabled = false;
+                        document.getElementById('mining-status-notice').innerText = "Watch a 2-minute ad to unlock and start your mining session.";
+                    }
                     
                     updateAllUI();
                 }
@@ -753,14 +758,12 @@
             const usdVal = (userDataCache.balance * BTC_USD_RATE).toFixed(4);
             const baseEffective = getCurrentHashrate();
 
-            // Real-time visual hash fluctuation (±0.45 Gh/s) when mining is active
             let displayHash = baseEffective;
             if (userDataCache.miningEndTime > Date.now()) {
                 const fluctuation = (Math.random() * 0.90) - 0.45;
                 displayHash = Math.max(0, baseEffective + fluctuation);
             }
 
-            // Real-time active miners fluctuation between 35,000 and 45,000
             const randomMiners = Math.floor(Math.random() * (45000 - 35000 + 1)) + 35000;
             const activeMiners = randomMiners.toLocaleString();
 
@@ -800,14 +803,74 @@
             });
         }
 
-        function startMiningSession() {
+        // --- MANDATORY 2-MINUTE AD TIMER AND DIRECT FIRESTORE LOCK ---
+        function triggerAdBeforeMining() {
             if (!isDataLoaded) return;
-            const sessionDurationMs = userDataCache.isPremium ? (60 * 60 * 1000) : (30 * 60 * 1000);
-            userDataCache.miningEndTime = Date.now() + sessionDurationMs;
-            document.getElementById('mining-status-notice').innerText = "Mining session in progress...";
-            syncToFirestore();
-            updateAllUI();
+            adWatched = false;
+
+            if (typeof showRewardedAd === "function") {
+                showRewardedAd({
+                    onRewarded: () => {
+                        adWatched = true;
+                        startTwoMinuteLockout();
+                    },
+                    onClosed: () => {
+                        if (!adWatched) {
+                            showCustomModal("Ad Required", "You must watch the full ad to start mining.");
+                        }
+                    }
+                });
+            } else {
+                console.log("Loading 2-minute ad simulation...");
+                adWatched = true;
+                startTwoMinuteLockout();
+            }
         }
+
+        function startTwoMinuteLockout() {
+            let timeLeft = 120; // 2 minutes in seconds
+            const miningButton = document.getElementById('start-mining-btn');
+            miningButton.disabled = true;
+
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            countdownTimer = setInterval(() => {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                document.getElementById('mining-btn-text').innerText = `Watch Ad / Wait (${minutes}:${seconds < 10 ? '0' : ''}${seconds})`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    recordAdCompletionAndStartMining();
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        async function recordAdCompletionAndStartMining() {
+            if (!currentUserId) return;
+            const userRef = db.collection("users").doc(currentUserId);
+            const sessionDurationMs = userDataCache.isPremium ? (60 * 60 * 1000) : (30 * 60 * 1000);
+            
+            try {
+                // Store server timestamp for ad completion and start mining session
+                await userRef.update({
+                    lastAdWatchedTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    miningEndTime: Date.now() + sessionDurationMs
+                });
+
+                userDataCache.miningEndTime = Date.now() + sessionDurationMs;
+                document.getElementById('mining-status-notice').innerText = "Mining session in progress...";
+                initAppLoop();
+                showCustomModal("Mining Started", "Your 2-minute ad lock complete! Mining session is active.");
+            } catch (error) {
+                console.error("Firestore sync error:", error);
+                showCustomModal("Error", "Failed to start mining session. Please try again.");
+                document.getElementById('start-mining-btn').disabled = false;
+                document.getElementById('mining-btn-text').innerText = "Start Mining (ad)";
+            }
+        }
+        // -----------------------------------------------------------------
 
         function claimHashBoost(boostId, ghAmount) {
             if (!isDataLoaded) return;
@@ -966,4 +1029,3 @@
     </script>
 </body>
 </html>
-
