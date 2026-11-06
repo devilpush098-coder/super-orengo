@@ -228,18 +228,89 @@
         .faq-item.open .chevron { transform: rotate(180deg); }
         .chevron { transition: transform 0.2s; font-size: 12px; color: #8e8e93; }
 
-        /* Spin Wheel Section */
+        /* ================= DECORATED 3-PART SPIN WHEEL ================= */
         .spin-container { text-align: center; padding: 10px 0; }
-        .spin-wheel-box {
-            width: 110px; height: 110px; margin: 0 auto 12px auto;
-            border-radius: 50%; background: conic-gradient(#f97316, #a855f7, #6366f1, #10b981, #f97316);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-            border: 3px solid #2c2c2e;
+        
+        .spin-wheel-wrapper {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            margin: 0 auto 16px auto;
         }
+
+        /* Pointer Arrow at Top Center */
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 18px solid #ef4444;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+        }
+
+        /* Rotating Outer Disc with Conic Gradient */
+        .spin-wheel-box {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #2c2c2e;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+            /* Slices: 0-120deg (Purple = $0.005), 120-240deg (Blue = $0.001), 240-360deg (Orange = Try Again) */
+            background: conic-gradient(
+                #a855f7 0deg 120deg,
+                #6366f1 120deg 240deg,
+                #f97316 240deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.0);
+        }
+
+        /* Absolute positioning for label slices aligned inside each 120-degree wedge */
+        .wheel-label-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            pointer-events: none;
+        }
+
+        .label-text {
+            margin-top: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            letter-spacing: 0.5px;
+        }
+
+        /* Rotate label wrappers to center text in their respective 120-degree slices */
+        .label-slice-1 { transform: rotate(60deg); }   /* $0.005 USD (Purple wedge) */
+        .label-slice-2 { transform: rotate(180deg); }  /* $0.001 USD (Blue wedge) */
+        .label-slice-3 { transform: rotate(300deg); }  /* Try Again (Orange wedge) */
+
+        /* Center Hub */
         .spin-inner-hub {
-            width: 75px; height: 75px; background: #1c1c1e; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 22px;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px; height: 48px;
+            background: #1c1c1e;
+            border: 3px solid #3f3f46;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(0,0,0,0.6);
         }
 
         /* Referral Box */
@@ -351,12 +422,12 @@
             <!-- Dual Daily Boost Rewards -->
             <div class="rewards-grid">
                 <div class="reward-card">
-                    <div class="reward-title">Daily Boost (2m)</div>
+                    <div class="reward-title">Boost (2m)</div>
                     <div class="reward-boost-val">🎁 10.6 Gh/s</div>
                     <button id="boost-btn-1" class="btn-boost" onclick="claimHashBoost(1, 10.6)">Boost (ad)</button>
                 </div>
                 <div class="reward-card">
-                    <div class="reward-title">Daily Boost (2m)</div>
+                    <div class="reward-title">Boost (2m)</div>
                     <div class="reward-boost-val">🎁 20.2 Gh/s</div>
                     <button id="boost-btn-2" class="btn-boost" onclick="claimHashBoost(2, 20.2)">Boost (ad)</button>
                 </div>
@@ -375,13 +446,35 @@
                 <div class="faq-answer">Computing power (hashrate) is used to solve complex cryptographic algorithms required to validate transaction blocks on the Bitcoin blockchain, earning rewards in return.</div>
             </div>
 
-            <!-- Spin Wheel Daily Game -->
+            <!-- Decorated 3-Part Spin Wheel Section -->
             <div class="card-panel spin-container" style="margin-top: 16px;">
                 <div class="panel-title" style="margin-bottom: 6px;">Daily Lucky Spin Wheel</div>
                 <p style="font-size: 11px; color: #8e8e93; margin-bottom: 14px;">Win up to $0.005 USD once per day!</p>
-                <div class="spin-wheel-box">
-                    <div class="spin-inner-hub">🎡</div>
+                
+                <div class="spin-wheel-wrapper">
+                    <!-- Top Arrow Pointer -->
+                    <div class="wheel-pointer"></div>
+
+                    <!-- 3-Part Rotating Wheel Disc -->
+                    <div id="wheel-disc" class="spin-wheel-box">
+                        <!-- Triangle Slice 1: $0.005 USD -->
+                        <div class="wheel-label-wrapper label-slice-1">
+                            <span class="label-text">$0.005</span>
+                        </div>
+                        <!-- Triangle Slice 2: $0.001 USD -->
+                        <div class="wheel-label-wrapper label-slice-2">
+                            <span class="label-text">$0.001</span>
+                        </div>
+                        <!-- Triangle Slice 3: Try Again -->
+                        <div class="wheel-label-wrapper label-slice-3">
+                            <span class="label-text">Try Again</span>
+                        </div>
+
+                        <!-- Center Wheel Hub Icon -->
+                        <div class="spin-inner-hub">🎡</div>
+                    </div>
                 </div>
+
                 <div id="spin-status-msg" style="font-size: 13px; font-weight: bold; color: #f97316; margin-bottom: 12px;">Ready to spin today's wheel</div>
                 <button id="spin-btn" class="btn-action" style="padding: 10px; font-size: 13px;" onclick="spinDailyWheel()">Spin Wheel Now</button>
             </div>
@@ -516,6 +609,7 @@
         let paypalRendered = false;
         let adWatched = false;
         let countdownTimer = null;
+        let currentWheelRotation = 0;
 
         let userDataCache = {
             balance: 0,
@@ -527,6 +621,7 @@
             refCode: "",
             referredBy: "",
             lastSpinDate: "",
+            hasSpunBefore: false,
             lastBoost1Claim: 0,
             lastBoost2Claim: 0,
             miningEndTime: 0,
@@ -571,6 +666,7 @@
                         userDataCache.refCode = data.refCode || ('ORENGO' + Math.floor(1000 + Math.random() * 9000));
                         userDataCache.referredBy = data.referredBy || "";
                         userDataCache.lastSpinDate = data.lastSpinDate || "";
+                        userDataCache.hasSpunBefore = !!data.hasSpunBefore;
                         userDataCache.miningEndTime = data.miningEndTime || 0;
                         userDataCache.isPremium = !!data.isPremium;
                     } else {
@@ -578,13 +674,15 @@
                         userDataCache.balance = 0;
                         userDataCache.baseHashrate = 15.90;
                         userDataCache.isPremium = false;
+                        userDataCache.hasSpunBefore = false;
 
                         userRef.set({
                             email: user.email,
                             balance: userDataCache.balance,
                             baseHashrate: userDataCache.baseHashrate,
                             refCode: userDataCache.refCode,
-                            isPremium: userDataCache.isPremium
+                            isPremium: userDataCache.isPremium,
+                            hasSpunBefore: false
                         }, { merge: true });
                     }
 
@@ -786,7 +884,7 @@
 
         function updateBoostButtonsUI() {
             const now = Date.now();
-            const cooldownMs = 24 * 60 * 60 * 1000;
+            const cooldownMs = 3 * 60 * 60 * 1000;
 
             [1, 2].forEach(id => {
                 const btn = document.getElementById(`boost-btn-${id}`);
@@ -833,7 +931,7 @@
         }
 
         function startTwoMinuteLockout() {
-            let timeLeft = 120; // 2 minutes in seconds
+            let timeLeft = 120;
             const miningButton = document.getElementById('start-mining-btn');
             miningButton.disabled = true;
 
@@ -858,7 +956,6 @@
             const sessionDurationMs = userDataCache.isPremium ? (60 * 60 * 1000) : (30 * 60 * 1000);
             
             try {
-                // Store server timestamp for ad completion and start mining session
                 await userRef.update({
                     lastAdWatchedTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     miningEndTime: Date.now() + sessionDurationMs
@@ -875,12 +972,11 @@
                 document.getElementById('mining-btn-text').innerText = "Start Mining (ad)";
             }
         }
-        // -----------------------------------------------------------------
 
         function claimHashBoost(boostId, ghAmount) {
             if (!isDataLoaded) return;
             const now = Date.now();
-            const cooldownMs = 24 * 60 * 60 * 1000;
+            const cooldownMs = 3 * 60 * 60 * 1000;
             const lastClaim = boostId === 1 ? userDataCache.lastBoost1Claim : userDataCache.lastBoost2Claim;
             const boostEnd = boostId === 1 ? userDataCache.boost1EndTime : userDataCache.boost2EndTime;
 
@@ -890,7 +986,7 @@
             }
 
             if (now - lastClaim < cooldownMs) {
-                showCustomModal("You have already Boosted", "You have used your today's free boost. Please come again after 24 hours. Thank you!");
+                showCustomModal("You have already Boosted", "You have used your boost. Please come again after 3 hours. Thank you!");
                 return;
             }
 
@@ -911,37 +1007,68 @@
             showCustomModal("Boost Activated", `Activated +${ghAmount} Gh/s speed boost for 2 minutes!`);
         }
 
+        /* ================= 3-PART SPIN WHEEL ANIMATION & LOGIC ================= */
         function spinDailyWheel() {
             if (!isDataLoaded) return;
+
             const todayStr = new Date().toDateString();
             if (userDataCache.lastSpinDate === todayStr) {
                 showCustomModal("Already Spun", "You have already spun the wheel today! Come back tomorrow.");
                 return;
             }
 
-            userDataCache.lastSpinDate = todayStr;
-            const rand = Math.random();
+            const spinBtn = document.getElementById('spin-btn');
+            spinBtn.disabled = true;
+
             let prizeUsd = 0;
             let msg = "";
+            let targetAngle = 60; // Center of Orange Wedge ("Try Again")
 
-            if (rand < 0.15) {
+            // 1. FIRST SPIN EVER -> ALWAYS LAND ON $0.005 USD
+            if (!userDataCache.hasSpunBefore) {
                 prizeUsd = 0.005;
-                msg = "🎉 Jackpot! You won $0.005 USD!";
-            } else if (rand < 0.75) {
-                prizeUsd = 0.001;
-                msg = "✨ You won $0.001 USD!";
+                msg = "🎉 Jackpot! You won $0.005 USD on your first spin!";
+                targetAngle = 300; // Center of Purple Wedge ($0.005) under pointer
             } else {
-                msg = "😢 Try again tomorrow! No reward this spin.";
+                // SUBSEQUENT SPINS -> Weighted probability (Mostly "Try Again")
+                const rand = Math.random();
+                if (rand < 0.70) {
+                    // 70% chance -> Try Again
+                    msg = "😢 Try again tomorrow! No reward this spin.";
+                    targetAngle = 60; // Center of Orange Wedge (Try Again)
+                } else if (rand < 0.90) {
+                    // 20% chance -> $0.001 USD
+                    prizeUsd = 0.001;
+                    msg = "✨ You won $0.001 USD!";
+                    targetAngle = 180; // Center of Blue Wedge ($0.001)
+                } else {
+                    // 10% chance -> $0.005 USD
+                    prizeUsd = 0.005;
+                    msg = "🎉 Jackpot! You won $0.005 USD!";
+                    targetAngle = 300; // Center of Purple Wedge ($0.005)
+                }
             }
 
-            if (prizeUsd > 0) {
-                userDataCache.balance += (prizeUsd / BTC_USD_RATE);
-            }
+            // Calculate rotation so top pointer lands exactly on the targeted slice angle
+            currentWheelRotation += 1800 + (targetAngle - (currentWheelRotation % 360));
+            const wheelDisc = document.getElementById('wheel-disc');
+            wheelDisc.style.transform = `rotate(${currentWheelRotation}deg)`;
 
-            document.getElementById('spin-status-msg').innerText = msg;
-            syncToFirestore();
-            updateAllUI();
-            showCustomModal("Spin Result", msg);
+            // Handle completion after 4-second spin animation finishes
+            setTimeout(() => {
+                userDataCache.lastSpinDate = todayStr;
+                userDataCache.hasSpunBefore = true;
+
+                if (prizeUsd > 0) {
+                    userDataCache.balance += (prizeUsd / BTC_USD_RATE);
+                }
+
+                document.getElementById('spin-status-msg').innerText = msg;
+                syncToFirestore();
+                updateAllUI();
+                showCustomModal("Spin Result", msg);
+                spinBtn.disabled = false;
+            }, 4000);
         }
 
         function copyReferralCode() {
@@ -1010,6 +1137,7 @@
                     lastBoost2Claim: userDataCache.lastBoost2Claim,
                     referredBy: userDataCache.referredBy,
                     lastSpinDate: userDataCache.lastSpinDate,
+                    hasSpunBefore: userDataCache.hasSpunBefore,
                     miningEndTime: userDataCache.miningEndTime,
                     isPremium: userDataCache.isPremium
                 }).catch(err => console.error("Firestore sync error:", err));
