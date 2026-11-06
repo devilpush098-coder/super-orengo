@@ -238,7 +238,6 @@
             margin: 0 auto 16px auto;
         }
 
-        /* Pointer Arrow at Top Center */
         .wheel-pointer {
             position: absolute;
             top: -10px;
@@ -253,7 +252,6 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
         }
 
-        /* Rotating Outer Disc with Conic Gradient */
         .spin-wheel-box {
             width: 100%;
             height: 100%;
@@ -262,7 +260,6 @@
             overflow: hidden;
             border: 4px solid #2c2c2e;
             box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
-            /* Slices: 0-120deg (Purple = $0.005), 120-240deg (Blue = $0.001), 240-360deg (Orange = Try Again) */
             background: conic-gradient(
                 #a855f7 0deg 120deg,
                 #6366f1 120deg 240deg,
@@ -271,7 +268,6 @@
             transition: transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.0);
         }
 
-        /* Absolute positioning for label slices aligned inside each 120-degree wedge */
         .wheel-label-wrapper {
             position: absolute;
             top: 0;
@@ -293,12 +289,10 @@
             letter-spacing: 0.5px;
         }
 
-        /* Rotate label wrappers to center text in their respective 120-degree slices */
-        .label-slice-1 { transform: rotate(60deg); }   /* $0.005 USD (Purple wedge) */
-        .label-slice-2 { transform: rotate(180deg); }  /* $0.001 USD (Blue wedge) */
-        .label-slice-3 { transform: rotate(300deg); }  /* Try Again (Orange wedge) */
+        .label-slice-1 { transform: rotate(60deg); }
+        .label-slice-2 { transform: rotate(180deg); }
+        .label-slice-3 { transform: rotate(300deg); }
 
-        /* Center Hub */
         .spin-inner-hub {
             position: absolute;
             top: 50%; left: 50%;
@@ -313,19 +307,16 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.6);
         }
 
-        /* Referral Box */
         .ref-box { background: #27272a; border-radius: 10px; padding: 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
         .ref-code-text { font-family: monospace; font-size: 14px; color: #f97316; font-weight: bold; }
         .copy-btn { background: #5856d6; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; }
 
-        /* Settings List */
         .settings-item {
             background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px;
             padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
         }
         .settings-label { font-size: 13px; font-weight: 500; }
 
-        /* Bottom Nav Bar */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background-color: #161618; border-top: 1px solid #2c2c2e;
@@ -340,7 +331,6 @@
         .nav-item.active { color: #5856d6; }
         .nav-icon { font-size: 18px; line-height: 1; }
 
-        /* PayPal Button Container */
         #paypal-button-container {
             width: 100%;
             min-height: 45px;
@@ -350,12 +340,10 @@
 </head>
 <body>
 
-    <!-- Top Progress Bar -->
     <div id="top-progress-bar" class="top-progress-container">
         <div id="top-progress-fill" class="top-progress-fill"></div>
     </div>
 
-    <!-- Custom Modal Overlay -->
     <div id="custom-modal" class="custom-modal-overlay">
         <div class="custom-modal-box">
             <div id="modal-title" class="custom-modal-title">Notice</div>
@@ -364,7 +352,6 @@
         </div>
     </div>
 
-    <!-- ================= HOME VIEW ================= -->
     <div id="view-home" class="view-section active-view">
         <div class="user-header">
             <div id="user-avatar" class="avatar-circle">K</div>
@@ -374,19 +361,16 @@
             </div>
         </div>
 
-        <!-- Sub Tabs: Mining vs Referral -->
         <div class="sub-tabs-row">
             <div id="stab-mining" class="sub-tab active" onclick="switchSubTab('mining')">Mining</div>
             <div id="stab-referral" class="sub-tab" onclick="switchSubTab('referral')">Referral</div>
         </div>
 
-        <!-- MINING SUB-TAB CONTENT -->
         <div id="subcontent-mining">
             <div class="total-btc-label">Total BTC</div>
             <div class="total-btc-amount"><span id="total-btc-val">0.00000000000</span> <span style="font-size: 13px; color: #8e8e93;">BTC</span></div>
             <div class="usd-equivalent" id="usd-eq-display">≈ $0.00 USD</div>
 
-            <!-- Mining Panel -->
             <div class="card-panel">
                 <div class="panel-header">
                     <span class="panel-title">Mining Panel</span>
@@ -419,7 +403,6 @@
                 </button>
             </div>
 
-            <!-- Dual Daily Boost Rewards -->
             <div class="rewards-grid">
                 <div class="reward-card">
                     <div class="reward-title">Boost (2m)</div>
@@ -433,7 +416,6 @@
                 </div>
             </div>
 
-            <!-- FAQs SECTION -->
             <div class="faq-section-title">FAQs</div>
 
             <div class="faq-item" onclick="toggleFaq(this)">
@@ -446,31 +428,24 @@
                 <div class="faq-answer">Computing power (hashrate) is used to solve complex cryptographic algorithms required to validate transaction blocks on the Bitcoin blockchain, earning rewards in return.</div>
             </div>
 
-            <!-- Decorated 3-Part Spin Wheel Section -->
             <div class="card-panel spin-container" style="margin-top: 16px;">
                 <div class="panel-title" style="margin-bottom: 6px;">Daily Lucky Spin Wheel</div>
                 <p style="font-size: 11px; color: #8e8e93; margin-bottom: 14px;">Win up to $0.005 USD once per day!</p>
                 
                 <div class="spin-wheel-wrapper">
-                    <!-- Top Arrow Pointer -->
                     <div class="wheel-pointer"></div>
 
-                    <!-- 3-Part Rotating Wheel Disc -->
                     <div id="wheel-disc" class="spin-wheel-box">
-                        <!-- Triangle Slice 1: $0.005 USD -->
                         <div class="wheel-label-wrapper label-slice-1">
                             <span class="label-text">$0.005</span>
                         </div>
-                        <!-- Triangle Slice 2: $0.001 USD -->
                         <div class="wheel-label-wrapper label-slice-2">
                             <span class="label-text">$0.001</span>
                         </div>
-                        <!-- Triangle Slice 3: Try Again -->
                         <div class="wheel-label-wrapper label-slice-3">
                             <span class="label-text">Try Again</span>
                         </div>
 
-                        <!-- Center Wheel Hub Icon -->
                         <div class="spin-inner-hub">🎡</div>
                     </div>
                 </div>
@@ -480,7 +455,6 @@
             </div>
         </div>
 
-        <!-- REFERRAL SUB-TAB CONTENT -->
         <div id="subcontent-referral" style="display: none;">
             <div class="card-panel">
                 <div class="panel-title" style="margin-bottom: 6px;">Referral Program</div>
@@ -505,7 +479,6 @@
         </div>
     </div>
 
-    <!-- ================= WALLET VIEW ================= -->
     <div id="view-wallet" class="view-section">
         <h2 style="font-size: 18px; margin-bottom: 16px;">Wallet & PayPal Payouts</h2>
         
@@ -522,7 +495,6 @@
         </div>
     </div>
 
-    <!-- ================= PREMIUM VIEW ================= -->
     <div id="view-premium" class="view-section">
         <h2 style="font-size: 18px; margin-bottom: 6px;">Unlock Premium</h2>
         <p style="font-size: 12px; color: #8e8e93; margin-bottom: 16px;">Upgrade to unlock PayPal withdrawals and mine faster.</p>
@@ -539,12 +511,10 @@
 
             <div id="premium-status-badge" style="font-size: 13px; font-weight: bold; color: #22c55e; margin-bottom: 12px; display: none;">✓ Premium Active</div>
 
-            <!-- PayPal Render Container -->
             <div id="paypal-button-container"></div>
         </div>
     </div>
 
-    <!-- ================= SETTINGS VIEW ================= -->
     <div id="view-settings" class="view-section">
         <h2 style="font-size: 18px; margin-bottom: 16px;">Settings & Profile</h2>
 
@@ -567,7 +537,6 @@
         </div>
     </div>
 
-    <!-- ================= BOTTOM NAVIGATION BAR ================= -->
     <div class="bottom-nav">
         <div id="nav-home" class="nav-item active" onclick="switchMainView('home')">
             <span class="nav-icon">🏠</span>
@@ -587,7 +556,6 @@
         </div>
     </div>
 
-    <!-- FIREBASE & LOGIC SCRIPT -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD3aVY-UknaJhL2jLSBESF2vMH-hKUgdf8",
@@ -816,7 +784,9 @@
                     const elapsedMs = sessionDurationMs - remainingMs;
                     const progressPercent = Math.min(100, (elapsedMs / sessionDurationMs) * 100);
 
-                    const rewardPerSecond = 0.00000000010 * (effectiveHashrate / 15.90);
+                    // Rate calculation: $1.00 USD per 600 minutes (36,000 seconds)
+                    const targetUsdPerSecond = 1 / 600 / 60;
+                    const rewardPerSecond = targetUsdPerSecond / BTC_USD_RATE;
                     userDataCache.balance += rewardPerSecond;
 
                     topBar.style.display = 'block';
@@ -906,7 +876,6 @@
             });
         }
 
-        // --- MANDATORY 2-MINUTE AD TIMER AND DIRECT FIRESTORE LOCK ---
         function triggerAdBeforeMining() {
             if (!isDataLoaded) return;
             adWatched = false;
@@ -1007,7 +976,6 @@
             showCustomModal("Boost Activated", `Activated +${ghAmount} Gh/s speed boost for 2 minutes!`);
         }
 
-        /* ================= 3-PART SPIN WHEEL ANIMATION & LOGIC ================= */
         function spinDailyWheel() {
             if (!isDataLoaded) return;
 
@@ -1022,39 +990,32 @@
 
             let prizeUsd = 0;
             let msg = "";
-            let targetAngle = 60; // Center of Orange Wedge ("Try Again")
+            let targetAngle = 60;
 
-            // 1. FIRST SPIN EVER -> ALWAYS LAND ON $0.005 USD
             if (!userDataCache.hasSpunBefore) {
                 prizeUsd = 0.005;
                 msg = "🎉 Jackpot! You won $0.005 USD on your first spin!";
-                targetAngle = 300; // Center of Purple Wedge ($0.005) under pointer
+                targetAngle = 300;
             } else {
-                // SUBSEQUENT SPINS -> Weighted probability (Mostly "Try Again")
                 const rand = Math.random();
                 if (rand < 0.70) {
-                    // 70% chance -> Try Again
                     msg = "😢 Try again tomorrow! No reward this spin.";
-                    targetAngle = 60; // Center of Orange Wedge (Try Again)
+                    targetAngle = 60;
                 } else if (rand < 0.90) {
-                    // 20% chance -> $0.001 USD
                     prizeUsd = 0.001;
                     msg = "✨ You won $0.001 USD!";
-                    targetAngle = 180; // Center of Blue Wedge ($0.001)
+                    targetAngle = 180;
                 } else {
-                    // 10% chance -> $0.005 USD
                     prizeUsd = 0.005;
                     msg = "🎉 Jackpot! You won $0.005 USD!";
-                    targetAngle = 300; // Center of Purple Wedge ($0.005)
+                    targetAngle = 300;
                 }
             }
 
-            // Calculate rotation so top pointer lands exactly on the targeted slice angle
             currentWheelRotation += 1800 + (targetAngle - (currentWheelRotation % 360));
             const wheelDisc = document.getElementById('wheel-disc');
             wheelDisc.style.transform = `rotate(${currentWheelRotation}deg)`;
 
-            // Handle completion after 4-second spin animation finishes
             setTimeout(() => {
                 userDataCache.lastSpinDate = todayStr;
                 userDataCache.hasSpunBefore = true;
