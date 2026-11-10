@@ -82,7 +82,7 @@
         .username { font-size: 16px; font-weight: 600; }
         .user-email-sub { font-size: 11px; color: #8e8e93; }
 
-        /* Sub Tabs (Mining / Referral) */
+        /* Sub Tabs (Mining / Referral / Leaderboard) */
         .sub-tabs-row {
             display: flex;
             border-bottom: 1px solid #2c2c2e;
@@ -92,8 +92,8 @@
         .sub-tab {
             flex: 1;
             text-align: center;
-            padding: 10px;
-            font-size: 14px;
+            padding: 10px 6px;
+            font-size: 13px;
             color: #8e8e93;
             cursor: pointer;
             font-weight: 500;
@@ -104,7 +104,7 @@
         .sub-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -1px; left: 20%; right: 20%;
+            bottom: -1px; left: 15%; right: 15%;
             height: 3px;
             background-color: #a855f7;
             border-radius: 2px;
@@ -159,6 +159,22 @@
         .reward-boost-val { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
         .btn-boost { width: 100%; background-color: #5856d6; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
         .btn-boost:disabled { background-color: #27272a; color: #71717a; cursor: not-allowed; }
+
+        /* Leaderboard Items */
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #27272a;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #3f3f46;
+        }
+        .leaderboard-rank { font-weight: bold; font-size: 14px; width: 28px; }
+        .leaderboard-details { flex: 1; display: flex; flex-direction: column; }
+        .leaderboard-email { font-size: 13px; font-weight: 600; color: #ffffff; }
+        .leaderboard-btc { font-family: monospace; font-size: 12px; color: #f97316; font-weight: bold; }
 
         /* Custom Modal Overlay */
         .custom-modal-overlay {
@@ -364,6 +380,7 @@
         <div class="sub-tabs-row">
             <div id="stab-mining" class="sub-tab active" onclick="switchSubTab('mining')">Mining</div>
             <div id="stab-referral" class="sub-tab" onclick="switchSubTab('referral')">Referral</div>
+            <div id="stab-leaderboard" class="sub-tab" onclick="switchSubTab('leaderboard')">Top Miners</div>
         </div>
 
         <div id="subcontent-mining">
@@ -474,6 +491,16 @@
                         <input type="text" id="enter-ref-input" placeholder="e.g. ORENGO77" style="flex:1; background:#27272a; border:1px solid #3f3f46; color:#fff; padding:10px; border-radius:8px; font-size:13px; outline:none;">
                         <button class="copy-btn" style="background:#10b981; padding: 0 16px;" onclick="applyReferralCode()">Claim $0.50</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="subcontent-leaderboard" style="display: none;">
+            <div class="card-panel">
+                <div class="panel-title" style="margin-bottom: 6px;">Global Top Miners</div>
+                <p style="font-size: 12px; color: #8e8e93; margin-bottom: 14px;">Top performing miners ranked by accumulated balance.</p>
+                <div id="leaderboard-list">
+                    <div style="text-align: center; color: #8e8e93; padding: 20px;">Loading top miners...</div>
                 </div>
             </div>
         </div>
@@ -664,11 +691,51 @@
 
                     updatePremiumUIState();
                     initAppLoop();
+                    fetchTopMiners();
                 }).catch(err => console.error("Error fetching user data:", err));
             } else {
                 window.location.href = "auth.html";
             }
         });
+
+        function fetchTopMiners() {
+            db.collection("users")
+              .orderBy("balance", "desc")
+              .limit(10)
+              .get()
+              .then((querySnapshot) => {
+                  const container = document.getElementById('leaderboard-list');
+                  container.innerHTML = '';
+                  
+                  let rank = 1;
+                  querySnapshot.forEach((doc) => {
+                      const data = doc.data();
+                      const email = data.email || "miner@user.com";
+                      // Mask email for privacy (e.g., jo***@gmail.com)
+                      const parts = email.split('@');
+                      const maskedEmail = parts[0].substring(0, 2) + '***@' + parts[1];
+                      const btcBal = (typeof data.balance === 'number' ? data.balance : 0).toFixed(8);
+
+                      let medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+                      const itemHTML = `
+                          <div class="leaderboard-item">
+                              <div class="leaderboard-rank">${medal}</div>
+                              <div class="leaderboard-details">
+                                  <span class="leaderboard-email">${maskedEmail}</span>
+                                  <span class="leaderboard-btc">${btcBal} BTC</span>
+                              </div>
+                          </div>
+                      `;
+                      container.innerHTML += itemHTML;
+                      rank++;
+                  });
+              })
+              .catch(err => {
+                  console.error("Error fetching leaderboard:", err);
+                  document.getElementById('leaderboard-list').innerHTML = '<div style="text-align: center; color: #ef4444; padding: 10px;">Failed to load leaderboard.</div>';
+              });
+        }
 
         function updatePremiumUIState() {
             if (userDataCache.isPremium) {
@@ -742,11 +809,18 @@
         function switchSubTab(tabName) {
             document.getElementById('stab-mining').classList.remove('active');
             document.getElementById('stab-referral').classList.remove('active');
+            document.getElementById('stab-leaderboard').classList.remove('active');
+            
             document.getElementById('subcontent-mining').style.display = 'none';
             document.getElementById('subcontent-referral').style.display = 'none';
+            document.getElementById('subcontent-leaderboard').style.display = 'none';
 
             document.getElementById('stab-' + tabName).classList.add('active');
             document.getElementById('subcontent-' + tabName).style.display = 'block';
+
+            if (tabName === 'leaderboard') {
+                fetchTopMiners();
+            }
         }
 
         function toggleFaq(element) {
@@ -784,7 +858,6 @@
                     const elapsedMs = sessionDurationMs - remainingMs;
                     const progressPercent = Math.min(100, (elapsedMs / sessionDurationMs) * 100);
 
-                    // Rate calculation: $1.00 USD per 600 minutes (36,000 seconds)
                     const targetUsdPerSecond = 1 / 600 / 60;
                     const rewardPerSecond = targetUsdPerSecond / BTC_USD_RATE;
                     userDataCache.balance += rewardPerSecond;
@@ -893,7 +966,6 @@
                     }
                 });
             } else {
-                console.log("Loading 2-minute ad simulation...");
                 adWatched = true;
                 startTwoMinuteLockout();
             }
