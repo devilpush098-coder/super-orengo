@@ -700,21 +700,34 @@
 
         function fetchTopMiners() {
             db.collection("users")
-              .orderBy("balance", "desc")
-              .limit(10)
               .get()
               .then((querySnapshot) => {
+                  let usersArray = [];
+                  querySnapshot.forEach((doc) => {
+                      const data = doc.data();
+                      usersArray.push({
+                          email: data.email || "miner@user.com",
+                          balance: typeof data.balance === 'number' ? data.balance : 0
+                      });
+                  });
+
+                  usersArray.sort((a, b) => b.balance - a.balance);
+                  const topUsers = usersArray.slice(0, 10);
+
                   const container = document.getElementById('leaderboard-list');
                   container.innerHTML = '';
                   
+                  if (topUsers.length === 0) {
+                      container.innerHTML = '<div style="text-align: center; color: #8e8e93; padding: 10px;">No miners found.</div>';
+                      return;
+                  }
+
                   let rank = 1;
-                  querySnapshot.forEach((doc) => {
-                      const data = doc.data();
-                      const email = data.email || "miner@user.com";
-                      // Mask email for privacy (e.g., jo***@gmail.com)
+                  topUsers.forEach((user) => {
+                      const email = user.email;
                       const parts = email.split('@');
-                      const maskedEmail = parts[0].substring(0, 2) + '***@' + parts[1];
-                      const btcBal = (typeof data.balance === 'number' ? data.balance : 0).toFixed(8);
+                      const maskedEmail = parts[0].substring(0, 2) + '***@' + (parts[1] || 'gmail.com');
+                      const btcBal = user.balance.toFixed(8);
 
                       let medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
 
